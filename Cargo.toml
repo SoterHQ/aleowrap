@@ -1,0 +1,27 @@
+[package]
+name = "aleowrap"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+
+[dependencies.snarkvm]
+version = "=0.14.6"
+features = [ "circuit", "console", "rocks" ]
+
+[dependencies.anyhow]
+version = "1.0.75"
+
+[dependencies.clap]
+version = "4.4"
+features = [ "derive", "color", "unstable-styles" ]
+
+[dependencies.rand]
+version = "0.8"
+default-features = false
+
+[dependencies.ureq]
+version = "2.7"
