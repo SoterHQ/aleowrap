@@ -10,12 +10,19 @@ pub use deploy::*;
 mod transfer;
 pub use transfer::*;
 
-use std::{str::FromStr, path::PathBuf};
+mod join;
+pub use join::*;
 
-use anyhow::{bail, Result, ensure};
+mod split;
+pub use split::*;
+
+use std::{path::PathBuf, str::FromStr};
+
+use anyhow::{bail, ensure, Result};
 use snarkvm::{
+    package::Package,
     prelude::{Ciphertext, Plaintext, PrivateKey, ProgramID, Record, ViewKey},
-    synthesizer::{Process, Program}, package::Package,
+    synthesizer::{Process, Program},
 };
 
 pub struct Command {}
@@ -93,7 +100,10 @@ impl Command {
     }
 
     /// Parse the package from the directory.
-    fn parse_package(program_id: ProgramID<CurrentNetwork>, path: Option<String>) -> Result<Package<CurrentNetwork>> {
+    fn parse_package(
+        program_id: ProgramID<CurrentNetwork>,
+        path: Option<String>,
+    ) -> Result<Package<CurrentNetwork>> {
         // Instantiate a path to the directory containing the manifest file.
         let directory = match path {
             Some(path) => PathBuf::from_str(&path)?,

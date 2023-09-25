@@ -14,8 +14,8 @@ pub fn transfer(
     recipient: &str,
     amount: u64,
     function: &str,
-    input_record: Option<&str>,
-    fee_record: Option<&str>,
+    input_record: &str,
+    fee_record: &str,
     fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
@@ -36,8 +36,7 @@ pub fn transfer(
     );
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, fee_record.expect("fee_record is none"))
-        .expect("fee_record is error");
+    let fee_record = Command::parse_record(&private_key, fee_record).expect("fee_record is error");
     let fee = match fee {
         Some(fee) => fee,
         None => 3000u64,
@@ -48,11 +47,8 @@ pub fn transfer(
 
     let (inputs, function) = match function {
         "private" => {
-            let input_record = Command::parse_record(
-                &private_key,
-                input_record.expect("not input_record is none"),
-            )
-            .expect("input_record is error");
+            let input_record =
+                Command::parse_record(&private_key, input_record).expect("input_record is error");
             (
                 vec![
                     Value::Record(input_record),
@@ -70,11 +66,8 @@ pub fn transfer(
             "transfer_public",
         ),
         "private_to_public" => {
-            let input_record = Command::parse_record(
-                &private_key,
-                input_record.expect("not input_record is none"),
-            )
-            .expect("input_record is error");
+            let input_record =
+                Command::parse_record(&private_key, input_record).expect("input_record is error");
             (
                 vec![
                     Value::Record(input_record),
@@ -92,11 +85,8 @@ pub fn transfer(
             "transfer_public_to_private",
         ),
         &_ => {
-            let input_record = Command::parse_record(
-                &private_key,
-                input_record.expect("not input_record is none"),
-            )
-            .expect("input_record is error");
+            let input_record =
+                Command::parse_record(&private_key, input_record).expect("input_record is error");
             (
                 vec![
                     Value::Record(input_record),
