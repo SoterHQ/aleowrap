@@ -1,36 +1,5 @@
 mod commands;
 
-use std::time::Instant;
-
-fn main() {
-    println!("Hello, world!");
-    let start_time = Instant::now();
-
-    let private_key = "APrivateKey1zkp5jS79CdFE5LbUzTvXcAd4fZLCTUVVqqgD91AApZVXJcA";
-    let program_id = "credlancer_rating_survey_v2.aleo";
-    let function = "submit_assessor";
-    let inputs = vec!["10000field", "1field", "1u64"];
-    let record =  Some("{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 39349297u64.private,  _nonce: 1711234411548659851426643372350679804994150752915608367928992063815077333263group.public}");
-    let fee = Some(3000u64);
-    let query = Some("https://vm.aleo.org/api");
-
-    let transaction = commands::execute(
-        private_key,
-        program_id,
-        function,
-        inputs,
-        record,
-        fee,
-        query,
-    );
-
-    println!("execute transaction: {}", transaction.unwrap());
-    
-    let end_time = Instant::now();
-    let execution_time = end_time - start_time;
-
-    println!("Execution time: {:?}", execution_time);
-}
 
 #[cfg(test)]
 mod tests {
