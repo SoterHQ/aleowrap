@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Result, Context};
 use std::str::FromStr;
 
 pub fn transfer(
@@ -28,7 +28,7 @@ pub fn transfer(
     let query = Query::from(query);
 
     // Retrieve the private key.
-    let private_key = PrivateKey::from_str(private_key).expect("private_key is error");
+    let private_key = PrivateKey::from_str(private_key).context("private_key is error")?;
 
     println!(
         "📦 Creating private transfer of {} microcredits to {}...\n",
@@ -36,7 +36,7 @@ pub fn transfer(
     );
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, fee_record).expect("fee_record is error");
+    let fee_record = Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
     let fee = match fee {
         Some(fee) => fee,
         None => 3000u64,
@@ -48,50 +48,50 @@ pub fn transfer(
     let (inputs, function) = match function {
         "private" => {
             let input_record =
-                Command::parse_record(&private_key, input_record).expect("input_record is error");
+                Command::parse_record(&private_key, input_record).context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
-                    Value::from_str(&format!("{}", recipient)).expect("recipient is error"),
-                    Value::from_str(&format!("{}u64", amount)).expect("amount is error"),
+                    Value::from_str(&format!("{}", recipient)).context("recipient is error")?,
+                    Value::from_str(&format!("{}u64", amount)).context("amount is error")?,
                 ],
                 "transfer_private",
             )
         }
         "public" => (
             vec![
-                Value::from_str(&format!("{}", recipient)).expect("recipient is error"),
-                Value::from_str(&format!("{}u64", amount)).expect("amount is error"),
+                Value::from_str(&format!("{}", recipient)).context("recipient is error")?,
+                Value::from_str(&format!("{}u64", amount)).context("amount is error")?,
             ],
             "transfer_public",
         ),
         "private_to_public" => {
             let input_record =
-                Command::parse_record(&private_key, input_record).expect("input_record is error");
+                Command::parse_record(&private_key, input_record).context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
-                    Value::from_str(&format!("{}", recipient)).expect("recipient is error"),
-                    Value::from_str(&format!("{}u64", amount)).expect("amount is error"),
+                    Value::from_str(&format!("{}", recipient)).context("recipient is error")?,
+                    Value::from_str(&format!("{}u64", amount)).context("amount is error")?,
                 ],
                 "transfer_private_to_public",
             )
         }
         "public_to_private" => (
             vec![
-                Value::from_str(&format!("{}", recipient)).expect("recipient is error"),
-                Value::from_str(&format!("{}u64", amount)).expect("amount is error"),
+                Value::from_str(&format!("{}", recipient)).context("recipient is error")?,
+                Value::from_str(&format!("{}u64", amount)).context("amount is error")?,
             ],
             "transfer_public_to_private",
         ),
         &_ => {
             let input_record =
-                Command::parse_record(&private_key, input_record).expect("input_record is error");
+                Command::parse_record(&private_key, input_record).context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
-                    Value::from_str(&format!("{}", recipient)).expect("recipient is error"),
-                    Value::from_str(&format!("{}u64", amount)).expect("amount is error"),
+                    Value::from_str(&format!("{}", recipient)).context("recipient is error")?,
+                    Value::from_str(&format!("{}u64", amount)).context("amount is error")?,
                 ],
                 "transfer_private",
             )
@@ -104,7 +104,7 @@ pub fn transfer(
 
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
-        .expect("ConsensusStore open error");
+        .context("ConsensusStore open error")?;
     let vm = VM::from(store)?;
 
     // Create a new transaction.
@@ -117,7 +117,7 @@ pub fn transfer(
             Some(query),
             rng,
         )
-        .expect("execute error");
+        .context("execute error")?;
 
     Ok(transaction.to_string())
 }

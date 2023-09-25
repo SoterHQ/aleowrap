@@ -21,8 +21,8 @@ use std::{path::PathBuf, str::FromStr};
 use anyhow::{bail, ensure, Result};
 use snarkvm::{
     package::Package,
-    prelude::{Ciphertext, Plaintext, PrivateKey, ProgramID, Record, ViewKey},
-    synthesizer::{Process, Program},
+    prelude::{Ciphertext, Plaintext, PrivateKey, ProgramID, Record, ViewKey, transaction::Transaction},
+    synthesizer::{Process, Program}, utilities::ToBytes,
 };
 
 pub struct Command {}
@@ -120,5 +120,107 @@ impl Command {
 
         // Return the package.
         Ok(package)
+    }
+
+    /// Determine if the transaction should be broadcast or displayed to user.
+    pub fn handle_transaction(
+        broadcast: Option<String>,
+        dry_run: bool,
+        store: Option<String>,
+        transaction: Transaction<CurrentNetwork>,
+        operation: String,
+    ) -> Result<String> {
+        // Get the transaction id.
+        let transaction_id = transaction.id();
+
+        // Ensure the transaction is not a fee transaction.
+        ensure!(!transaction.is_fee(), "The transaction is a fee transaction and cannot be broadcast");
+
+        // Determine if the transaction should be stored.
+        if let Some(path) = store {
+            match PathBuf::from_str(&path) {
+                Ok(file_path) => {
+                    let transaction_bytes = transaction.to_bytes_le()?;
+                    std::fs::write(&file_path, transaction_bytes)?;
+                    println!("Transaction {transaction_id} was stored to {}", file_path.display());
+                }
+                Err(err) => {
+                    println!("The transaction was unable to be stored due to: {err}");
+                }
+            }
+        };
+
+        // Determine if the transaction should be broadcast to the network.
+        if let Some(endpoint) = broadcast {
+            // Send the deployment request to the local development node.
+            match ureq::post(&endpoint).send_json(&transaction) {
+                Ok(id) => {
+                    // Remove the quotes from the response.
+                    let response_string = id.into_string()?.trim_matches('\"').to_string();
+                    ensure!(
+                        response_string == transaction_id.to_string(),
+                        "The response does not match the transaction id. ({response_string} != {transaction_id})"
+                    );
+
+                    match transaction {
+                        Transaction::Deploy(..) => {
+                            println!(
+                                "✅ Successfully broadcast deployment {transaction_id} ('{}') to {}.",
+                                operation,
+                                endpoint
+                            )
+                        }
+                        Transaction::Execute(..) => {
+                            println!(
+                                "✅ Successfully broadcast execution {transaction_id} ('{}') to {}.",
+                                operation,
+                                endpoint
+                            )
+                        }
+                        Transaction::Fee(..) => {
+                            println!("❌ Failed to broadcast fee '{}' to the {}.", operation, endpoint)
+                        }
+                    }
+                }
+                Err(error) => {
+                    let error_message = match error {
+                        ureq::Error::Status(code, response) => {
+                            format!("(status code {code}: {:?})", response.into_string()?)
+                        }
+                        ureq::Error::Transport(err) => format!("({err})"),
+                    };
+
+                    match transaction {
+                        Transaction::Deploy(..) => {
+                            bail!("❌ Failed to deploy '{}' to {}: {}", operation, &endpoint, error_message)
+                        }
+                        Transaction::Execute(..) => {
+                            bail!(
+                                "❌ Failed to broadcast execution '{}' to {}: {}",
+                                operation,
+                                &endpoint,
+                                error_message
+                            )
+                        }
+                        Transaction::Fee(..) => {
+                            bail!(
+                                "❌ Failed to broadcast fee '{}' to {}: {}",
+                                operation,
+                                &endpoint,
+                                error_message
+                            )
+                        }
+                    }
+                }
+            };
+
+            // Output the transaction id.
+            Ok(transaction_id.to_string())
+        } else if dry_run {
+            // Output the transaction string.
+            Ok(transaction.to_string())
+        } else {
+            Ok("".to_string())
+        }
     }
 }

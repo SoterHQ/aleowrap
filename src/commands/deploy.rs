@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Context};
 use snarkvm::prelude::{
     deployment_cost,
     query::Query,
@@ -28,8 +28,8 @@ pub fn deploy(
     let query = Query::from(query);
 
     // Retrieve the private key.
-    let private_key = PrivateKey::from_str(private_key).expect("parse private_key");
-    let program_id = ProgramID::from_str(program_id).expect("parse program_id");
+    let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
+    let program_id = ProgramID::from_str(program_id).context("parse program_id")?;
 
     let fee = match fee {
         Some(fee) => fee,
@@ -38,7 +38,7 @@ pub fn deploy(
 
     // Fetch the package from the directory.
     let package =
-        Command::parse_package(program_id, Some(String::from(path))).expect("Error package");
+        Command::parse_package(program_id, Some(String::from(path))).context("Error package")?;
 
     println!(
         "📦 Creating deployment transaction for '{}'...\n",
@@ -46,29 +46,29 @@ pub fn deploy(
     );
 
     // Generate the deployment
-    let deployment = package.deploy::<CurrentAleo>(None).expect("Error deploy");
+    let deployment = package.deploy::<CurrentAleo>(None).context("Error deploy")?;
     let deployment_id = deployment
         .to_deployment_id()
-        .expect("Error to_deployment_id");
+        .context("Error to_deployment_id")?;
 
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
-        .expect("Error ConsensusStore");
-    let vm = VM::from(store).expect("Error VM");
+        .context("Error ConsensusStore")?;
+    let vm = VM::from(store).context("Error VM")?;
 
     // Compute the minimum deployment cost.
     let (minimum_deployment_cost, (_, _)) =
-        deployment_cost(&deployment).expect("Error deployment_cost");
+        deployment_cost(&deployment).context("Error deployment_cost")?;
     // Determine the fee.
     let fee_in_microcredits = minimum_deployment_cost
         .checked_add(fee)
         .ok_or_else(|| anyhow!("Fee overflowed for a deployment transaction"))
-        .expect("Error checked_add fee");
+        .context("Error checked_add fee")?;
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, record).expect("Error parse_record");
+    let fee_record = Command::parse_record(&private_key, record).context("Error parse_record")?;
     let (_, fee) = vm
         .execute_fee_raw(
             &private_key,
@@ -78,14 +78,14 @@ pub fn deploy(
             Some(query),
             rng,
         )
-        .expect("Error execute_fee_raw");
+        .context("Error execute_fee_raw")?;
 
     // Construct the owner.
-    let owner = ProgramOwner::new(&private_key, deployment_id, rng).expect("Error ProgramOwner");
+    let owner = ProgramOwner::new(&private_key, deployment_id, rng).context("Error ProgramOwner")?;
 
     // Create a new transaction.
     let transaction =
-        Transaction::from_deployment(owner, deployment, fee).expect("Error from_deployment");
+        Transaction::from_deployment(owner, deployment, fee).context("Error from_deployment")?;
 
     Ok(transaction.to_string())
 }

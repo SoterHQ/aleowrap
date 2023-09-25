@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Result, Context};
 use std::str::FromStr;
 
 pub fn join(
@@ -26,12 +26,12 @@ pub fn join(
     let query = Query::from(query);
 
     // Retrieve the private key.
-    let private_key = PrivateKey::from_str(private_key).expect("private_key is error");
+    let private_key = PrivateKey::from_str(private_key).context("private_key is error")?;
 
     println!("📦 Creating join...\n");
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, fee_record).expect("fee_record is error");
+    let fee_record = Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
     let fee = match fee {
         Some(fee) => fee,
         None => 3000u64,
@@ -41,9 +41,9 @@ pub fn join(
     let function = "join";
 
     let first_record =
-        Command::parse_record(&private_key, first_record).expect("first_record is error");
+        Command::parse_record(&private_key, first_record).context("first_record is error")?;
     let second_record =
-        Command::parse_record(&private_key, second_record).expect("second_record is error");
+        Command::parse_record(&private_key, second_record).context("second_record is error")?;
 
     let inputs = vec![Value::Record(first_record), Value::Record(second_record)];
 
@@ -53,7 +53,7 @@ pub fn join(
 
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
-        .expect("ConsensusStore open error");
+        .context("ConsensusStore open error")?;
     let vm = VM::from(store)?;
 
     // Create a new transaction.
@@ -66,7 +66,7 @@ pub fn join(
             Some(query),
             rng,
         )
-        .expect("execute error");
+        .context("execute error")?;
 
     Ok(transaction.to_string())
 }

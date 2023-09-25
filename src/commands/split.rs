@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::Result;
+use anyhow::{Result, Context};
 use std::str::FromStr;
 
 pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) -> Result<String> {
@@ -19,17 +19,17 @@ pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) 
     let query = Query::from(query);
 
     // Retrieve the private key.
-    let private_key = PrivateKey::from_str(private_key).expect("private_key is error");
+    let private_key = PrivateKey::from_str(private_key).context("private_key is error")?;
 
     println!("📦 Creating split...\n");
 
     let function = "split";
 
-    let record = Command::parse_record(&private_key, record).expect("first_record is error");
+    let record = Command::parse_record(&private_key, record).context("first_record is error")?;
 
     let inputs = vec![
         Value::Record(record),
-        Value::from_str(&format!("{}u64", amount)).expect("Error amount is error"),
+        Value::from_str(&format!("{}u64", amount)).context("Error amount is error")?,
     ];
     // Generate the transfer_private transaction.
     // Initialize an RNG.
@@ -37,7 +37,7 @@ pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) 
 
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
-        .expect("ConsensusStore open error");
+        .context("ConsensusStore open error")?;
     let vm = VM::from(store)?;
 
     // Create a new transaction.
@@ -50,7 +50,7 @@ pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) 
             Some(query),
             rng,
         )
-        .expect("execute error");
+        .context("execute error")?;
 
     Ok(transaction.to_string())
 }
