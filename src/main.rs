@@ -79,26 +79,40 @@ fn main() {
     //     transaction.unwrap()
     // );
 
-    println!("\n\nTest joining");
+    // println!("\n\nTest joining");
+    // let start_time = Instant::now();
+    // let private_key = "APrivateKey1zkp5jS79CdFE5LbUzTvXcAd4fZLCTUVVqqgD91AApZVXJcA";
+    // let first_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 43942975u64.private,  _nonce: 303740973537344897259386283713161150685036921805917367976266695703557874374group.public}";
+    // let second_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 2412306u64.private,  _nonce: 1369019400486776948954331496176943112883653006830301026200787901274803963169group.public}";
+    // let fee_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 807527u64.private,  _nonce: 3020231535783622303456992406133413632741364705254372594334628855177911893894group.public}";
+
+    // let transaction = commands::join(
+    //     private_key,
+    //     first_record,
+    //     second_record,
+    //     fee_record,
+    //     None,
+    //     None,
+    // );
+    // let end_time = Instant::now();
+    // let execution_time = end_time - start_time;
+    // let transaction = transaction.unwrap();
+    // println!(
+    //     "join usetime:{:?} transaction: {}",
+    //     execution_time, &transaction
+    // );
+
+    println!("\n\nTest spliting");
     let start_time = Instant::now();
     let private_key = "APrivateKey1zkp5jS79CdFE5LbUzTvXcAd4fZLCTUVVqqgD91AApZVXJcA";
-    let first_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 4593678u64.private,  _nonce: 2519444983733166664452332514213249618009422832813505241649029942240273681354group.public}";
-    let second_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 39349297u64.private,  _nonce: 1711234411548659851426643372350679804994150752915608367928992063815077333263group.public}";
-    let fee_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 2417370u64.private,  _nonce: 6125567204338138114699824935057483504900942792237093903423312221865875650403group.public}";
-
-    let transaction = commands::join(
-        private_key,
-        first_record,
-        second_record,
-        fee_record,
-        None,
-        None,
-    );
+    let record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 46355281u64.private,  _nonce: 4623943361284637569005395620722961560489686707596035289279547177039392504337group.public}";
+    let amount = 23942975u64;
+    let transaction = commands::split(private_key, record, amount, None);
     let end_time = Instant::now();
     let execution_time = end_time - start_time;
     let transaction = transaction.unwrap();
     println!(
-        "join usetime:{:?} transaction: {}",
+        "split usetime:{:?} transaction: {}",
         execution_time, &transaction
     );
 
@@ -108,7 +122,7 @@ fn main() {
     let dry_run = true;
     let transaction = Transaction::<Testnet3>::from_str(&transaction).unwrap();
     let program_id = "credits.aleo";
-    let function = "join";
+    let function = "split";
 
     let operation = Locator::<Testnet3>::from_str(&format!("{}/{}", program_id, function))
         .unwrap()
