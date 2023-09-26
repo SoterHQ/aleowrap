@@ -17,10 +17,6 @@ features = [ "circuit", "console", "rocks" ]
 [dependencies.anyhow]
 version = "1.0.75"
 
-[dependencies.clap]
-version = "4.4"
-features = [ "derive", "color", "unstable-styles" ]
-
 [dependencies.rand]
 version = "0.8"
 default-features = false
