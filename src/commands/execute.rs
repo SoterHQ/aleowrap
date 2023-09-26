@@ -13,7 +13,7 @@ pub fn execute(
     private_key: &str,
     program_id: &str,
     function: &str,
-    inputs: Vec<&str>,
+    inputs: Vec<String>,
     record: Option<&str>,
     fee: Option<u64>,
     query: Option<&str>,
@@ -55,7 +55,7 @@ pub fn execute(
         }
     };
 
-    let inputs: Vec<Value<CurrentNetwork>> = inputs.iter().map(|x| Value::from_str(&format!("{x}")).unwrap()).collect();
+    let inputs: Vec<Value<CurrentNetwork>> = inputs.iter().map(|x| Value::from_str(x).unwrap()).collect();
 
     // Create a new transaction.
     let transaction = vm.execute(
