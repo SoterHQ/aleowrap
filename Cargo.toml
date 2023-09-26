@@ -7,8 +7,6 @@ edition = "2021"
 
 [lib]
 name = "aleowrap"
-crate-type = ["cdylib"]
-
 
 [dependencies.snarkvm]
 version = "=0.14.6"
