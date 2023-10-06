@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::str::FromStr;
 
 pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) -> Result<String> {
@@ -47,6 +47,7 @@ pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) 
             ("credits.aleo", function),
             inputs.iter(),
             None,
+            0u64,
             Some(query),
             rng,
         )

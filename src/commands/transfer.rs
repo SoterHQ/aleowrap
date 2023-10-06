@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{bail, Result, Context};
+use anyhow::{bail, Context, Result};
 use std::str::FromStr;
 
 pub fn transfer(
@@ -36,19 +36,16 @@ pub fn transfer(
     );
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
-    let fee = match fee {
-        Some(fee) => fee,
-        None => 3000u64,
-    };
-    let fee = (fee_record, fee);
+    let fee_record =
+        Some(Command::parse_record(&private_key, fee_record).context("fee_record is error")?);
+    let priority_fee = fee.unwrap_or(0);
 
     // Prepare the inputs for a transfer.
 
     let (inputs, function) = match function {
         "private" => {
-            let input_record =
-                Command::parse_record(&private_key, input_record).context("input_record is error")?;
+            let input_record = Command::parse_record(&private_key, input_record)
+                .context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
@@ -66,8 +63,8 @@ pub fn transfer(
             "transfer_public",
         ),
         "private_to_public" => {
-            let input_record =
-                Command::parse_record(&private_key, input_record).context("input_record is error")?;
+            let input_record = Command::parse_record(&private_key, input_record)
+                .context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
@@ -85,8 +82,8 @@ pub fn transfer(
             "transfer_public_to_private",
         ),
         &_ => {
-            let input_record =
-                Command::parse_record(&private_key, input_record).context("input_record is error")?;
+            let input_record = Command::parse_record(&private_key, input_record)
+                .context("input_record is error")?;
             (
                 vec![
                     Value::Record(input_record),
@@ -113,7 +110,8 @@ pub fn transfer(
             &private_key,
             ("credits.aleo", function),
             inputs.iter(),
-            Some(fee),
+            fee_record,
+            priority_fee,
             Some(query),
             rng,
         )

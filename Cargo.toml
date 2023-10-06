@@ -9,7 +9,7 @@ edition = "2021"
 name = "aleowrap"
 
 [dependencies.snarkvm]
-version = "=0.14.6"
+version = "=0.15.1"
 features = [ "circuit", "console", "rocks" ]
 
 [dependencies.anyhow]

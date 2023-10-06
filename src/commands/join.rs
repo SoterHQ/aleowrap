@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{bail, Result, Context};
+use anyhow::{bail, Context, Result};
 use std::str::FromStr;
 
 pub fn join(
@@ -31,12 +31,9 @@ pub fn join(
     println!("📦 Creating join...\n");
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
-    let fee = match fee {
-        Some(fee) => fee,
-        None => 3000u64,
-    };
-    let fee = (fee_record, fee);
+    let fee_record =
+        Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
+    let priority_fee = fee.unwrap_or(0);
 
     let function = "join";
 
@@ -62,7 +59,8 @@ pub fn join(
             &private_key,
             ("credits.aleo", function),
             inputs.iter(),
-            Some(fee),
+            Some(fee_record),
+            priority_fee,
             Some(query),
             rng,
         )
