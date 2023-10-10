@@ -89,7 +89,7 @@ pub fn transfer(
             "transfer_public_to_private",
         ),
         &_ => {
-            let input_record = Command::parse_record(&private_key, input_record)
+            let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
                 vec![
