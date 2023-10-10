@@ -14,8 +14,8 @@ pub fn transfer(
     recipient: &str,
     amount: u64,
     function: &str,
-    input_record: &str,
-    fee_record: &str,
+    input_record: Option<&str>,
+    fee_record: Option<&str>,
     fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
@@ -36,15 +36,22 @@ pub fn transfer(
     );
 
     // Prepare the fees.
-    let fee_record =
-        Some(Command::parse_record(&private_key, fee_record).context("fee_record is error")?);
+    let fee_record = match fee_record {
+        Some(fee_record) => {
+            Some(Command::parse_record(&private_key, fee_record).context("fee_record is error")?)
+        },
+        None => {
+            None
+        },
+    };
+        
     let priority_fee = fee.unwrap_or(0);
 
     // Prepare the inputs for a transfer.
 
     let (inputs, function) = match function {
         "private" => {
-            let input_record = Command::parse_record(&private_key, input_record)
+            let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
                 vec![
@@ -63,7 +70,7 @@ pub fn transfer(
             "transfer_public",
         ),
         "private_to_public" => {
-            let input_record = Command::parse_record(&private_key, input_record)
+            let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
                 vec![
