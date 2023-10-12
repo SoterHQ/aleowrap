@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     Identifier, PrivateKey, ProgramID, VM, Value,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Result, Context};
 use std::str::FromStr;
 
 pub fn execute(
@@ -45,14 +45,20 @@ pub fn execute(
         None => None,
     };
 
-    let inputs: Vec<Value<CurrentNetwork>> = inputs.iter().map(|x| Value::from_str(x).unwrap()).collect();
+    let mut input_list: Vec<Value<CurrentNetwork>> = Vec::new();
+
+    for input in inputs.iter() {
+        let ss = Value::from_str(input).with_context(|| return format!("input {input} err"))?;
+        input_list.push(ss);
+    }
+
     let priority_fee = fee.unwrap_or(0);
     
     // Create a new transaction.
     let transaction = vm.execute(
         &private_key,
         (program_id, function),
-        inputs.iter(),
+        input_list.iter(),
         fee_record,
         priority_fee,
         Some(query),

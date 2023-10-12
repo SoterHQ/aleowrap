@@ -51,6 +51,9 @@ pub fn transfer(
 
     let (inputs, function) = match function {
         "private" => {
+            if input_record.is_none() {
+                return Err(anyhow::anyhow!("call transfer_private, input_record is none"));
+            }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
@@ -70,6 +73,9 @@ pub fn transfer(
             "transfer_public",
         ),
         "private_to_public" => {
+            if input_record.is_none() {
+                return Err(anyhow::anyhow!("call transfer_private_to_public,input_record is none"));
+            }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
@@ -89,6 +95,9 @@ pub fn transfer(
             "transfer_public_to_private",
         ),
         &_ => {
+            if input_record.is_none() {
+                return Err(anyhow::anyhow!("call transfer_private, input_record is none"));
+            }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
             (
