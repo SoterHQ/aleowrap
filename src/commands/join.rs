@@ -13,7 +13,7 @@ pub fn join(
     private_key: &str,
     first_record: &str,
     second_record: &str,
-    fee_record: &str,
+    fee_record: Option<&str>,
     fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
@@ -31,8 +31,15 @@ pub fn join(
     println!("📦 Creating join...\n");
 
     // Prepare the fees.
-    let fee_record =
-        Command::parse_record(&private_key, fee_record).context("fee_record is error")?;
+    let fee_record = if fee_record.is_some() {
+        Some(
+            Command::parse_record(&private_key, fee_record.unwrap())
+                .context("fee_record is error")?,
+        )
+    } else {
+        None
+    };
+
     let priority_fee = fee.unwrap_or(0);
 
     let function = "join";
@@ -59,7 +66,7 @@ pub fn join(
             &private_key,
             ("credits.aleo", function),
             inputs.iter(),
-            Some(fee_record),
+            fee_record,
             priority_fee,
             Some(query),
             rng,
