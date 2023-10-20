@@ -1,16 +1,17 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use rand::{rngs::StdRng, SeedableRng};
-use snarkvm::{prelude::{
-    deployment_cost,
-    query::Query,
-    store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    transaction::Transaction,
-    PrivateKey, ProgramOwner, VM,
-}, synthesizer::{Program, Process}};
-
-use js_sys::{Object, Reflect};
+use snarkvm::{
+    prelude::{
+        deployment_cost,
+        query::Query,
+        store::{helpers::memory::ConsensusMemory, ConsensusStore},
+        transaction::Transaction,
+        PrivateKey, ProgramOwner, VM,
+    },
+    synthesizer::{Process, Program},
+};
 
 use super::{Command, CurrentAleo, CurrentNetwork};
 
@@ -18,7 +19,7 @@ pub fn deploy(
     private_key: &str,
     program: &str,
     record: &str,
-    imports: Option<Object>,
+    imports: Option<HashMap<String, String>>,
     priority_fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
@@ -32,7 +33,7 @@ pub fn deploy(
 
     // Retrieve the private key.
     let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
-   
+
     let priority_fee = match priority_fee {
         Some(priority_fee) => priority_fee,
         None => 1000u64,
@@ -47,7 +48,9 @@ pub fn deploy(
 
     println!("Creating deployment");
     // Generate the deployment
-    let deployment = process.deploy::<CurrentAleo, _>(&program, rng).context("Error process deploy")?;
+    let deployment = process
+        .deploy::<CurrentAleo, _>(&program, rng)
+        .context("Error process deploy")?;
     let deployment_id = deployment
         .to_deployment_id()
         .context("Error to_deployment_id")?;
@@ -77,7 +80,8 @@ pub fn deploy(
     let fee = vm.execute_fee_authorization(fee_authorization, Some(query), rng)?;
 
     // Construct the owner.
-    let owner = ProgramOwner::new(&private_key, deployment_id, rng).context("Error ProgramOwner")?;
+    let owner =
+        ProgramOwner::new(&private_key, deployment_id, rng).context("Error ProgramOwner")?;
 
     // Create a new transaction.
     let transaction =
@@ -89,24 +93,24 @@ pub fn deploy(
 fn resolve_imports(
     process: &mut Process<CurrentNetwork>,
     program: &Program<CurrentNetwork>,
-    imports: Option<Object>,
+    imports: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
     if let Some(imports) = imports {
         program.imports().keys().try_for_each(|program_id| {
             // Get the program string
             let program_id = program_id.to_string();
-            if let Some(import_string) = Reflect::get(&imports, &program_id.as_str().into())
-                .map_err(|_| "Program import not found in imports provided".to_string())?
-                .as_string()
-            {
+            if let Some(import_string) = imports.get(&program_id) {
                 if &program_id != "credits.aleo" {
                     // crate::log(&format!("Importing program: {}", program_id));
-                    let import = Program::<CurrentNetwork>::from_str(&import_string).map_err(|err| err.to_string())?;
+                    let import = Program::<CurrentNetwork>::from_str(&import_string)
+                        .map_err(|err| err.to_string())?;
                     // If the program has imports, add them
                     resolve_imports(process, &import, Some(imports.clone()))?;
                     // If the process does not already contain the program, add it
                     if !process.contains_program(import.id()) {
-                        process.add_program(&import).map_err(|err| err.to_string())?;
+                        process
+                            .add_program(&import)
+                            .map_err(|err| err.to_string())?;
                     }
                 }
             }
