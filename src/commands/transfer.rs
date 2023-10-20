@@ -31,7 +31,7 @@ pub fn transfer(
     let private_key = PrivateKey::from_str(private_key).context("private_key is error")?;
 
     println!(
-        "📦 Creating private transfer of {} microcredits to {}...\n",
+        "📦 Creating transfer of {} microcredits to {}...\n",
         amount, recipient
     );
 
