@@ -29,6 +29,9 @@ features = ["macros"]
 [dependencies.tracing]
 version = "0.1"
 
+[dependencies.js-sys]
+version = "0.3"
+
 [dependencies.tracing-subscriber]
 version = "0.3"
 features = [ "env-filter", "parking_lot", "time", "local-time" ]

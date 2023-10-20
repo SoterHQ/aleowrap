@@ -1,21 +1,24 @@
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
-use snarkvm::prelude::{
+use rand::{rngs::StdRng, SeedableRng};
+use snarkvm::{prelude::{
     deployment_cost,
     query::Query,
     store::{helpers::memory::ConsensusMemory, ConsensusStore},
     transaction::Transaction,
-    PrivateKey, ProgramID, ProgramOwner, VM,
-};
+    PrivateKey, ProgramOwner, VM,
+}, synthesizer::{Program, Process}};
+
+use js_sys::{Object, Reflect};
 
 use super::{Command, CurrentAleo, CurrentNetwork};
 
 pub fn deploy(
     private_key: &str,
-    program_id: &str,
-    path: &str,
+    program: &str,
     record: &str,
+    imports: Option<Object>,
     priority_fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
@@ -29,24 +32,22 @@ pub fn deploy(
 
     // Retrieve the private key.
     let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
-    let program_id = ProgramID::from_str(program_id).context("parse program_id")?;
-
+   
     let priority_fee = match priority_fee {
         Some(priority_fee) => priority_fee,
         None => 1000u64,
     };
 
-    // Fetch the package from the directory.
-    let package =
-        Command::parse_package(program_id, Some(String::from(path))).context("Error package")?;
+    let program = Program::from_str(program)?;
 
-    println!(
-        "📦 Creating deployment transaction for '{}'...\n",
-        program_id.to_string()
-    );
+    let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    println!("Checking program imports are valid and add them to the process");
+    let _ = resolve_imports(&mut process, &program, imports);
+    let rng = &mut StdRng::from_entropy();
 
+    println!("Creating deployment");
     // Generate the deployment
-    let deployment = package.deploy::<CurrentAleo>(None).context("Error deploy")?;
+    let deployment = process.deploy::<CurrentAleo, _>(&program, rng).context("Error process deploy")?;
     let deployment_id = deployment
         .to_deployment_id()
         .context("Error to_deployment_id")?;
@@ -83,4 +84,35 @@ pub fn deploy(
         Transaction::from_deployment(owner, deployment, fee).context("Error from_deployment")?;
 
     Ok(transaction.to_string())
+}
+
+fn resolve_imports(
+    process: &mut Process<CurrentNetwork>,
+    program: &Program<CurrentNetwork>,
+    imports: Option<Object>,
+) -> Result<(), String> {
+    if let Some(imports) = imports {
+        program.imports().keys().try_for_each(|program_id| {
+            // Get the program string
+            let program_id = program_id.to_string();
+            if let Some(import_string) = Reflect::get(&imports, &program_id.as_str().into())
+                .map_err(|_| "Program import not found in imports provided".to_string())?
+                .as_string()
+            {
+                if &program_id != "credits.aleo" {
+                    // crate::log(&format!("Importing program: {}", program_id));
+                    let import = Program::<CurrentNetwork>::from_str(&import_string).map_err(|err| err.to_string())?;
+                    // If the program has imports, add them
+                    resolve_imports(process, &import, Some(imports.clone()))?;
+                    // If the process does not already contain the program, add it
+                    if !process.contains_program(import.id()) {
+                        process.add_program(&import).map_err(|err| err.to_string())?;
+                    }
+                }
+            }
+            Ok::<(), String>(())
+        })
+    } else {
+        Ok(())
+    }
 }
