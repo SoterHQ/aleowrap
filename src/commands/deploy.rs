@@ -16,7 +16,7 @@ pub fn deploy(
     program_id: &str,
     path: &str,
     record: &str,
-    fee: Option<u64>,
+    priority_fee: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
     let query = match query {
@@ -31,8 +31,8 @@ pub fn deploy(
     let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
     let program_id = ProgramID::from_str(program_id).context("parse program_id")?;
 
-    let fee = match fee {
-        Some(fee) => fee,
+    let priority_fee = match priority_fee {
+        Some(priority_fee) => priority_fee,
         None => 1000u64,
     };
 
@@ -61,21 +61,18 @@ pub fn deploy(
     // Compute the minimum deployment cost.
     let (minimum_deployment_cost, (_, _)) =
         deployment_cost(&deployment).context("Error deployment_cost")?;
-    // Determine the fee.
-    let fee_in_microcredits = minimum_deployment_cost
-        .checked_add(fee)
-        .ok_or_else(|| anyhow!("Fee overflowed for a deployment transaction"))
-        .context("Error checked_add fee")?;
 
     // Prepare the fees.
     let fee_record = Command::parse_record(&private_key, record).context("Error parse_record")?;
     let fee_authorization = vm.authorize_fee_private(
         &private_key,
         fee_record,
-        fee_in_microcredits,
+        minimum_deployment_cost,
+        priority_fee,
         deployment_id,
         rng,
     )?;
+
     let fee = vm.execute_fee_authorization(fee_authorization, Some(query), rng)?;
 
     // Construct the owner.

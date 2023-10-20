@@ -9,7 +9,7 @@ edition = "2021"
 name = "aleowrap"
 
 [dependencies.snarkvm]
-version = "=0.15.1"
+version = "=0.16.1"
 features = [ "circuit", "console", "rocks" ]
 
 [dependencies.anyhow]
@@ -21,3 +21,14 @@ default-features = false
 
 [dependencies.ureq]
 version = "2.7"
+
+[dependencies.time]
+version = "0.3.7"
+features = ["macros"]
+
+[dependencies.tracing]
+version = "0.1"
+
+[dependencies.tracing-subscriber]
+version = "0.3"
+features = [ "env-filter", "parking_lot", "time", "local-time" ]
