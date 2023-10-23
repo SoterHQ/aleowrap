@@ -1,6 +1,9 @@
 type CurrentAleo = snarkvm::circuit::AleoV0;
 type CurrentNetwork = snarkvm::prelude::Testnet3;
 
+mod cost;
+pub use cost::*;
+
 mod execute;
 pub use execute::*;
 

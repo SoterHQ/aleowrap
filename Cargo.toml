@@ -8,8 +8,12 @@ edition = "2021"
 [lib]
 name = "aleowrap"
 
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+
 [dependencies.snarkvm]
-version = "=0.16.1"
+version = "=0.16.2"
 features = [ "circuit", "console", "rocks" ]
 
 [dependencies.anyhow]

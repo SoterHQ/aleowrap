@@ -90,7 +90,7 @@ pub fn deploy(
     Ok(transaction.to_string())
 }
 
-fn resolve_imports(
+pub fn resolve_imports(
     process: &mut Process<CurrentNetwork>,
     program: &Program<CurrentNetwork>,
     imports: Option<HashMap<String, String>>,
