@@ -81,14 +81,14 @@ pub fn execution_cost(
         .prove_execution::<CurrentAleo, _>(&locator, &mut StdRng::from_entropy())
         .context("execution_cost prove_execution load")?;
 
-    let (minimum_deployment_cost, (storage_cost, finalize_cost)) =
+    let (minimum_execution_cost, (storage_cost, finalize_cost)) =
         vm_execution_cost(&vm, &execution)?;
 
     let json_object = serde_json::json!({
-        "minimum_deployment_cost":minimum_deployment_cost,
+        "minimum_execution_cost":minimum_execution_cost,
         "storage_cost":storage_cost,
         "finalize_cost":finalize_cost,
     });
-    
+
     Ok(json_object.to_string())
 }
