@@ -13,7 +13,7 @@ use snarkvm::{
     synthesizer::{Process, Program},
 };
 
-use super::{deploy::resolve_imports, CurrentAleo, CurrentNetwork};
+use super::{deploy::resolve_imports, CurrentAleo, CurrentNetwork, Command};
 
 pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) -> Result<String> {
     let program = Program::from_str(program)?;
@@ -60,15 +60,15 @@ pub fn execution_cost(
         Some(query) => query,
         None => "https://vm.aleo.org/api",
     };
+    // Load the program and it's imports into the process.
+    Command::load_program(&query, &mut vm.process().write(), &program_id)?;
 
     // Compute the authorization.
     let authorization = vm
         .authorize(&private_key, program_id, function_name, inputs, rng)
         .context("Error execution_cost vm authorize")?;
 
-    let process = Process::<CurrentNetwork>::load().context("Error process load")?;
-
-    let (_, mut trace) = process
+    let (_, mut trace) =  vm.process().write()
         .execute::<CurrentAleo>(authorization)
         .context("Error process execute")?;
 
