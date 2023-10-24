@@ -18,9 +18,9 @@ use super::{Command, CurrentAleo, CurrentNetwork};
 pub fn deploy(
     private_key: &str,
     program: &str,
-    record: &str,
+    fee_record: Option<&str>,
     imports: Option<HashMap<String, String>>,
-    priority_fee: Option<u64>,
+    priority_fee_in_microcredits: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
     let query = match query {
@@ -34,10 +34,7 @@ pub fn deploy(
     // Retrieve the private key.
     let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
 
-    let priority_fee = match priority_fee {
-        Some(priority_fee) => priority_fee,
-        None => 1000u64,
-    };
+    let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0u64);
 
     let program = Program::from_str(program)?;
 
@@ -63,19 +60,33 @@ pub fn deploy(
     let vm = VM::from(store).context("Error VM")?;
 
     // Compute the minimum deployment cost.
-    let (minimum_deployment_cost, (_, _)) =
+    let (base_fee_in_microcredits, (_, _)) =
         deployment_cost(&deployment).context("Error deployment_cost")?;
 
     // Prepare the fees.
-    let fee_record = Command::parse_record(&private_key, record).context("Error parse_record")?;
-    let fee_authorization = vm.authorize_fee_private(
-        &private_key,
-        fee_record,
-        minimum_deployment_cost,
-        priority_fee,
-        deployment_id,
-        rng,
-    )?;
+    let fee_authorization = match fee_record {
+        Some(fee_record) => {
+            let fee_record = Command::parse_record(&private_key, fee_record).context("Error parse_record")?;
+            vm.authorize_fee_private(
+                &private_key,
+                fee_record,
+                base_fee_in_microcredits,
+                priority_fee_in_microcredits,
+                deployment_id,
+                rng,
+            )?
+        },
+        None => {
+            vm.authorize_fee_public(
+                &private_key,
+                minimum_deployment_cost,
+                priority_fee_in_microcredits,
+                deployment_id,
+                rng,
+            )?
+        },
+    };
+    
 
     let fee = vm.execute_fee_authorization(fee_authorization, Some(query), rng)?;
 

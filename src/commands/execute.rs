@@ -14,8 +14,8 @@ pub fn execute(
     program_id: &str,
     function: &str,
     inputs: Vec<String>,
-    record: Option<&str>,
-    fee: Option<u64>,
+    fee_record: Option<&str>,
+    priority_fee_in_microcredits: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
     // Initialize an RNG.
@@ -40,7 +40,7 @@ pub fn execute(
     let query = Query::from(query);
 
     // Prepare the fee.
-    let fee_record = match record {
+    let fee_record = match fee_record {
         Some(record_string) => Some(Command::parse_record(&private_key, &record_string)?),
         None => None,
     };
@@ -52,7 +52,7 @@ pub fn execute(
         input_list.push(ss);
     }
 
-    let priority_fee = fee.unwrap_or(0);
+    let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0);
     
     // Create a new transaction.
     let transaction = vm.execute(
@@ -60,7 +60,7 @@ pub fn execute(
         (program_id, function),
         input_list.iter(),
         fee_record,
-        priority_fee,
+        priority_fee_in_microcredits,
         Some(query),
         rng,
     )?;

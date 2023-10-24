@@ -14,7 +14,7 @@ pub fn join(
     first_record: &str,
     second_record: &str,
     fee_record: Option<&str>,
-    fee: Option<u64>,
+    priority_fee_in_microcredits: Option<u64>,
     query: Option<&str>,
 ) -> Result<String> {
     let query = match query {
@@ -40,7 +40,7 @@ pub fn join(
         None
     };
 
-    let priority_fee = fee.unwrap_or(0);
+    let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0);
 
     let function = "join";
 
@@ -67,7 +67,7 @@ pub fn join(
             ("credits.aleo", function),
             inputs.iter(),
             fee_record,
-            priority_fee,
+            priority_fee_in_microcredits,
             Some(query),
             rng,
         )
