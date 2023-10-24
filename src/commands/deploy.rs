@@ -79,7 +79,7 @@ pub fn deploy(
         None => {
             vm.authorize_fee_public(
                 &private_key,
-                minimum_deployment_cost,
+                base_fee_in_microcredits,
                 priority_fee_in_microcredits,
                 deployment_id,
                 rng,
