@@ -58,7 +58,7 @@ pub fn execution_cost(
     let function_name = Identifier::from_str(function)?;
     let query = match query {
         Some(query) => query,
-        None => "https://vm.aleo.org/api",
+        None => "https://api.explorer.aleo.org/v1",
     };
     // Load the program and it's imports into the process.
     Command::load_program(&query, &mut vm.process().write(), &program_id)?;

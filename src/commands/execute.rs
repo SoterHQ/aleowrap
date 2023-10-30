@@ -31,7 +31,7 @@ pub fn execute(
 
     let query = match query {
         Some(query) => query,
-        None => "https://vm.aleo.org/api",
+        None => "https://api.explorer.aleo.org/v1",
     };
 
     // Load the program and it's imports into the process.

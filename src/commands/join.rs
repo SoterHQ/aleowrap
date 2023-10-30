@@ -19,7 +19,7 @@ pub fn join(
 ) -> Result<String> {
     let query = match query {
         Some(query) => query,
-        None => "https://vm.aleo.org/api",
+        None => "https://api.explorer.aleo.org/v1",
     };
 
     // Specify the query
