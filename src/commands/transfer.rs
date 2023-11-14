@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     PrivateKey, Value, VM,
 };
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use std::str::FromStr;
 
 pub fn transfer(

@@ -6,7 +6,7 @@ use snarkvm::prelude::{
     Identifier, PrivateKey, ProgramID, VM, Value,
 };
 
-use anyhow::{bail, Result, Context};
+use anyhow::{Result, Context};
 use std::str::FromStr;
 
 pub fn execute(
