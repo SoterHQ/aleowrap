@@ -1,11 +1,5 @@
 pub mod commands;
-pub use commands::deploy;
-pub use commands::deployment_cost;
-pub use commands::execute;
-pub use commands::execution_cost;
-pub use commands::join;
-pub use commands::split;
-pub use commands::transfer;
+pub use commands::*;
 
 #[cfg(test)]
 mod tests {

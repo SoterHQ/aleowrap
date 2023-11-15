@@ -25,6 +25,9 @@ pub use record::*;
 mod account;
 pub use account::*;
 
+mod decrypt;
+pub use decrypt::*;
+
 use std::{path::PathBuf, str::FromStr};
 
 use anyhow::{bail, ensure, Result};
