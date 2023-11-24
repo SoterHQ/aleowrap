@@ -1,7 +1,10 @@
-use snarkvm::{
-    circuit::prelude::PrimeField,
-    prelude::{Address, Environment, FromBytes, PrivateKey, ToBytes, ViewKey},
+use snarkvm_console::{
+    account::{PrivateKey, ViewKey},
+    program::{Address, Environment, FromBytes, ToBytes},
 };
+
+use snarkvm_circuit::prelude::PrimeField;
+
 use std::str::FromStr;
 
 use super::CurrentNetwork;

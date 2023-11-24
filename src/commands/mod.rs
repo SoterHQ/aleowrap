@@ -1,5 +1,5 @@
-type CurrentAleo = snarkvm::circuit::AleoV0;
-type CurrentNetwork = snarkvm::prelude::Testnet3;
+type CurrentAleo = snarkvm_circuit::AleoV0;
+type CurrentNetwork = snarkvm_console::network::Testnet3;
 
 mod cost;
 pub use cost::*;
@@ -31,11 +31,14 @@ pub use decrypt::*;
 use std::{path::PathBuf, str::FromStr};
 
 use anyhow::{bail, ensure, Result};
-use snarkvm::{
-    package::Package,
-    prelude::{Ciphertext, Plaintext, PrivateKey, ProgramID, Record, ViewKey, transaction::Transaction},
-    synthesizer::{Process, Program}, utilities::ToBytes,
+
+use snarkvm_console::{
+    account::{PrivateKey, ViewKey},
+    program::{Ciphertext, Plaintext, ProgramID, Record},
 };
+use snarkvm_ledger_block::transaction::Transaction;
+use snarkvm_synthesizer::{Process, Program};
+use snarkvm_utilities::ToBytes;
 
 pub struct Command {}
 
@@ -112,27 +115,27 @@ impl Command {
     }
 
     /// Parse the package from the directory.
-    fn parse_package(
-        program_id: ProgramID<CurrentNetwork>,
-        path: Option<String>,
-    ) -> Result<Package<CurrentNetwork>> {
-        // Instantiate a path to the directory containing the manifest file.
-        let directory = match path {
-            Some(path) => PathBuf::from_str(&path)?,
-            None => std::env::current_dir()?,
-        };
+    // fn parse_package(
+    //     program_id: ProgramID<CurrentNetwork>,
+    //     path: Option<String>,
+    // ) -> Result<Package<CurrentNetwork>> {
+    //     // Instantiate a path to the directory containing the manifest file.
+    //     let directory = match path {
+    //         Some(path) => PathBuf::from_str(&path)?,
+    //         None => std::env::current_dir()?,
+    //     };
 
-        // Load the package.
-        let package = Package::open(&directory)?;
+    //     // Load the package.
+    //     let package = Package::open(&directory)?;
 
-        ensure!(
-            package.program_id() == &program_id,
-            "The program name in the package does not match the specified program name"
-        );
+    //     ensure!(
+    //         package.program_id() == &program_id,
+    //         "The program name in the package does not match the specified program name"
+    //     );
 
-        // Return the package.
-        Ok(package)
-    }
+    //     // Return the package.
+    //     Ok(package)
+    // }
 
     /// Determine if the transaction should be broadcast or displayed to user.
     pub fn handle_transaction(
@@ -146,7 +149,10 @@ impl Command {
         let transaction_id = transaction.id();
 
         // Ensure the transaction is not a fee transaction.
-        ensure!(!transaction.is_fee(), "The transaction is a fee transaction and cannot be broadcast");
+        ensure!(
+            !transaction.is_fee(),
+            "The transaction is a fee transaction and cannot be broadcast"
+        );
 
         // Determine if the transaction should be stored.
         if let Some(path) = store {
@@ -154,7 +160,10 @@ impl Command {
                 Ok(file_path) => {
                     let transaction_bytes = transaction.to_bytes_le()?;
                     std::fs::write(&file_path, transaction_bytes)?;
-                    println!("Transaction {transaction_id} was stored to {}", file_path.display());
+                    println!(
+                        "Transaction {transaction_id} was stored to {}",
+                        file_path.display()
+                    );
                 }
                 Err(err) => {
                     println!("The transaction was unable to be stored due to: {err}");
@@ -190,7 +199,10 @@ impl Command {
                             )
                         }
                         Transaction::Fee(..) => {
-                            println!("❌ Failed to broadcast fee '{}' to the {}.", operation, endpoint)
+                            println!(
+                                "❌ Failed to broadcast fee '{}' to the {}.",
+                                operation, endpoint
+                            )
                         }
                     }
                 }
@@ -204,7 +216,12 @@ impl Command {
 
                     match transaction {
                         Transaction::Deploy(..) => {
-                            bail!("❌ Failed to deploy '{}' to {}: {}", operation, &endpoint, error_message)
+                            bail!(
+                                "❌ Failed to deploy '{}' to {}: {}",
+                                operation,
+                                &endpoint,
+                                error_message
+                            )
                         }
                         Transaction::Execute(..) => {
                             bail!(

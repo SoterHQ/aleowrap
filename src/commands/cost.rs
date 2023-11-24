@@ -3,17 +3,19 @@ use std::{collections::HashMap, ops::Add, str::FromStr};
 use anyhow::{Context, Result};
 use rand::{rngs::StdRng, SeedableRng};
 use serde_json;
-use snarkvm::{
-    prelude::{
-        deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost,
-        query::Query,
-        store::{helpers::memory::{ConsensusMemory, BlockMemory}, ConsensusStore},
-        Identifier, PrivateKey, ProgramID, VM,
-    },
-    synthesizer::{Process, Program},
+
+use snarkvm_console::{account::PrivateKey, program::Identifier, program::ProgramID};
+use snarkvm_ledger_query::Query;
+use snarkvm_ledger_store::{
+    helpers::memory::{BlockMemory, ConsensusMemory},
+    ConsensusStore,
+};
+use snarkvm_synthesizer::{
+    deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost, Process, Program,
+    VM,
 };
 
-use super::{deploy::resolve_imports, CurrentAleo, CurrentNetwork, Command};
+use super::{deploy::resolve_imports, Command, CurrentAleo, CurrentNetwork};
 
 pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) -> Result<String> {
     let program = Program::from_str(program)?;
@@ -68,8 +70,10 @@ pub fn execution_cost(
         .authorize(&private_key, program_id, function_name, inputs, rng)
         .context("Error execution_cost vm authorize")?;
 
-    let (_, mut trace) =  vm.process().write()
-        .execute::<CurrentAleo>(authorization)
+    let (_, mut trace) = vm
+        .process()
+        .write()
+        .execute::<CurrentAleo, _>(authorization, rng)
         .context("Error process execute")?;
 
     let query = Query::<CurrentNetwork, BlockMemory<_>>::from(query);

@@ -1,10 +1,9 @@
 use super::{Command, CurrentNetwork};
 
-use snarkvm::prelude::{
-    query::Query,
-    store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    PrivateKey, Value, VM,
-};
+use snarkvm_console::{account::PrivateKey, program::Value};
+use snarkvm_ledger_query::Query;
+use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_synthesizer::VM;
 
 use anyhow::{Context, Result};
 use std::str::FromStr;
@@ -39,12 +38,10 @@ pub fn transfer(
     let fee_record = match fee_record {
         Some(fee_record) => {
             Some(Command::parse_record(&private_key, fee_record).context("fee_record is error")?)
-        },
-        None => {
-            None
-        },
+        }
+        None => None,
     };
-        
+
     let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0);
 
     // Prepare the inputs for a transfer.
@@ -52,7 +49,9 @@ pub fn transfer(
     let (inputs, function) = match function {
         "private" => {
             if input_record.is_none() {
-                return Err(anyhow::anyhow!("call transfer_private, input_record is none"));
+                return Err(anyhow::anyhow!(
+                    "call transfer_private, input_record is none"
+                ));
             }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
@@ -74,7 +73,9 @@ pub fn transfer(
         ),
         "private_to_public" => {
             if input_record.is_none() {
-                return Err(anyhow::anyhow!("call transfer_private_to_public,input_record is none"));
+                return Err(anyhow::anyhow!(
+                    "call transfer_private_to_public,input_record is none"
+                ));
             }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;
@@ -96,7 +97,9 @@ pub fn transfer(
         ),
         &_ => {
             if input_record.is_none() {
-                return Err(anyhow::anyhow!("call transfer_private, input_record is none"));
+                return Err(anyhow::anyhow!(
+                    "call transfer_private, input_record is none"
+                ));
             }
             let input_record = Command::parse_record(&private_key, input_record.unwrap())
                 .context("input_record is error")?;

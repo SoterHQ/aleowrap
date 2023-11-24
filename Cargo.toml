@@ -12,9 +12,26 @@ name = "aleowrap"
 serde = "1.0"
 serde_json = "1.0"
 
-[dependencies.snarkvm]
-version = "=0.16.2"
-features = [ "circuit", "console", "rocks" ]
+[dependencies.snarkvm-console]
+version = "0.16.10"
+
+[dependencies.snarkvm-circuit]
+version = "0.16.10"
+
+[dependencies.snarkvm-synthesizer]
+version = "0.16.10"
+
+[dependencies.snarkvm-ledger-block]
+version = "0.16.10"
+
+[dependencies.snarkvm-ledger-query]
+version = "0.16.10"
+
+[dependencies.snarkvm-ledger-store]
+version = "0.16.10"
+
+[dependencies.snarkvm-utilities]
+version = "0.16.10"
 
 [dependencies.anyhow]
 version = "1.0.75"

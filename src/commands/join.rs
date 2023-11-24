@@ -1,10 +1,12 @@
 use super::{Command, CurrentNetwork};
 
-use snarkvm::prelude::{
-    query::Query,
-    store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    PrivateKey, Value, VM,
+use snarkvm_console::{
+    account::PrivateKey,
+    program::Value,
 };
+use snarkvm_ledger_query::Query;
+use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_synthesizer::VM;
 
 use anyhow::{Context, Result};
 use std::str::FromStr;

@@ -1,6 +1,6 @@
-use snarkvm::{
-    console::program::Identifier,
-    prelude::{Ciphertext, Field, Network, Plaintext, PrivateKey, ProgramID, Record, ViewKey},
+use snarkvm_console::{
+    account::{PrivateKey, ViewKey},
+    program::{Ciphertext, Field, Identifier, Network, Plaintext, ProgramID, Record},
 };
 use std::str::FromStr;
 
@@ -113,10 +113,7 @@ fn serial_number_string(
     Ok(serial_number.to_string())
 }
 
-pub fn decrypt_record(
-    private_key: &str,
-    record: &str,
-) -> Result<String> {
+pub fn decrypt_record(private_key: &str, record: &str) -> Result<String> {
     let record = RecordCiphertext::from_str(record).context("Error ViewKey try_from")?;
     let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
         .context("[decrypt_records] Error PrivateKey from_str")?;
@@ -131,7 +128,7 @@ pub fn decrypt_record(
 
 #[cfg(test)]
 mod tests {
-    use super::{decrypt_records, decrypt_record};
+    use super::{decrypt_record, decrypt_records};
 
     #[test]
     fn test_decrypt_records() {

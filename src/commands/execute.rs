@@ -1,12 +1,14 @@
 use super::{Command, CurrentNetwork};
 
-use snarkvm::prelude::{
-    query::Query,
-    store::{helpers::memory::ConsensusMemory, ConsensusStore},
-    Identifier, PrivateKey, ProgramID, VM, Value,
+use snarkvm_console::{
+    account::PrivateKey,
+    program::{Identifier, ProgramID, Value},
 };
+use snarkvm_ledger_query::Query;
+use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_synthesizer::VM;
 
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::str::FromStr;
 
 pub fn execute(
@@ -53,7 +55,7 @@ pub fn execute(
     }
 
     let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0);
-    
+
     // Create a new transaction.
     let transaction = vm.execute(
         &private_key,

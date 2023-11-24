@@ -2,16 +2,12 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, Result};
 use rand::{rngs::StdRng, SeedableRng};
-use snarkvm::{
-    prelude::{
-        deployment_cost,
-        query::Query,
-        store::{helpers::memory::ConsensusMemory, ConsensusStore},
-        transaction::Transaction,
-        PrivateKey, ProgramOwner, VM,
-    },
-    synthesizer::{Process, Program},
-};
+
+use snarkvm_console::{account::PrivateKey, program::ProgramOwner};
+use snarkvm_ledger_block::Transaction;
+use snarkvm_ledger_query::Query;
+use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_synthesizer::{deployment_cost, Process, Program, VM};
 
 use super::{Command, CurrentAleo, CurrentNetwork};
 
@@ -66,7 +62,8 @@ pub fn deploy(
     // Prepare the fees.
     let fee_authorization = match fee_record {
         Some(fee_record) => {
-            let fee_record = Command::parse_record(&private_key, fee_record).context("Error parse_record")?;
+            let fee_record =
+                Command::parse_record(&private_key, fee_record).context("Error parse_record")?;
             vm.authorize_fee_private(
                 &private_key,
                 fee_record,
@@ -75,18 +72,15 @@ pub fn deploy(
                 deployment_id,
                 rng,
             )?
-        },
-        None => {
-            vm.authorize_fee_public(
-                &private_key,
-                base_fee_in_microcredits,
-                priority_fee_in_microcredits,
-                deployment_id,
-                rng,
-            )?
-        },
+        }
+        None => vm.authorize_fee_public(
+            &private_key,
+            base_fee_in_microcredits,
+            priority_fee_in_microcredits,
+            deployment_id,
+            rng,
+        )?,
     };
-    
 
     let fee = vm.execute_fee_authorization(fee_authorization, Some(query), rng)?;
 
