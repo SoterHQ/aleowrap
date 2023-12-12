@@ -9,6 +9,7 @@ edition = "2021"
 name = "aleowrap"
 
 [dependencies]
+rayon = "1.8.0"
 serde = "1.0"
 serde_json = "1.0"
 

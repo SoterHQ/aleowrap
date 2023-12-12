@@ -1,6 +1,7 @@
+use rayon::prelude::*;
 use snarkvm_console::{
     account::{PrivateKey, ViewKey},
-    program::{Ciphertext, Field, Identifier, Network, Plaintext, ProgramID, Record},
+    program::{Address, Ciphertext, Field, Identifier, Plaintext, ProgramID, Record},
 };
 use std::str::FromStr;
 
@@ -10,85 +11,50 @@ use serde::{Deserialize, Serialize};
 
 type RecordPlaintext = Record<CurrentNetwork, Plaintext<CurrentNetwork>>;
 type RecordCiphertext = Record<CurrentNetwork, Ciphertext<CurrentNetwork>>;
-
-#[derive(Serialize)]
-pub struct OldRecordData<N: Network> {
-    record: RecordPlaintext,
-    transactionid: N::TransitionID,
-    serial_number: Field<CurrentNetwork>,
-}
+type AddressNative = Address<CurrentNetwork>;
 
 #[derive(Serialize)]
 pub struct RecordData {
-    record: RecordPlaintext,
-    identifier: String,
-    serial_number: String,
-    program_id: String,
-    height: u32,
-    timestamp: i64,
-    block_hash: String,
-    transaction_id: String,
-    transition_id: String,
-    function_name: String,
-    output_index: u8,
-    input: Option<Vec<String>>,
+    pub record: RecordPlaintext,
+    pub serial_number: String,
+    #[serde(flatten)]
+    pub record_meta: RecordMeta,
 }
 
 #[derive(Deserialize)]
 pub struct RecordOrgData {
-    record_ciphertext: String,
-    identifier: String,
-    program_id: String,
-    height: u32,
-    timestamp: i64,
-    block_hash: String,
-    transaction_id: String,
-    transition_id: String,
-    function_name: String,
-    output_index: u8,
-    input: Option<Vec<String>>,
+    #[serde(flatten)]
+    pub record_meta: RecordMeta,
 }
 
-pub fn decrypt_records(private_key: &str, records_orgdata: &str) -> Result<String> {
-    let record_org_datas: Vec<RecordOrgData> =
-        serde_json::from_str(records_orgdata).unwrap_or_default();
-    let mut records = Vec::new();
-    for record_org in record_org_datas {
-        if let Ok(record) = RecordCiphertext::from_str(&record_org.record_ciphertext) {
-            let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
-                .context("Error PrivateKey from_str")?;
-            if let Ok(plaintext) = record.decrypt(
-                &ViewKey::<CurrentNetwork>::try_from(private_key)
-                    .context("Error ViewKey try_from")?,
-            ) {
-                let program_id = record_org.program_id.clone();
+#[derive(Serialize, Deserialize)]
+pub struct RecordMeta {
+    pub record_ciphertext: String,
+    pub identifier: String,
+    pub program_id: String,
+    pub height: u32,
+    pub timestamp: i64,
+    pub block_hash: String,
+    pub transaction_id: String,
+    pub transition_id: String,
+    pub function_name: String,
+    pub output_index: u8,
+    pub input: Option<Vec<String>>,
+    pub address: Option<String>,
+}
 
-                let record_name = &record_org.identifier;
-                if let Ok(serial_number) =
-                    serial_number_string(plaintext.clone(), &private_key, &program_id, record_name)
-                {
-                    let record_data: RecordData = RecordData {
-                        record: plaintext.clone(),
-                        identifier: record_org.identifier,
-                        serial_number,
-                        program_id,
-                        height: record_org.height,
-                        timestamp: record_org.timestamp,
-                        block_hash: record_org.block_hash,
-                        transaction_id: record_org.transaction_id,
-                        transition_id: record_org.transition_id,
-                        function_name: record_org.function_name,
-                        output_index: record_org.output_index,
-                        input: record_org.input,
-                    };
-                    records.push(record_data)
-                };
-            };
-        };
-    }
-    Ok(serde_json::to_string_pretty(&records)
-        .unwrap_or_default()
-        .replace("\\n", ""))
+pub fn decrypt_records(private_key: &str, records_orgdata: Vec<String>) -> Result<Vec<String>> {
+    let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
+        .context("[decrypt_records] Error PrivateKey from_str")?;
+    let address = AddressNative::try_from(private_key).context("Error Address try_from")?;
+    let address = address.to_string();
+
+    let decrypted_records = records_orgdata
+        .par_iter()
+        .map(|record| decrypt_record_data(private_key, record, &address))
+        .collect::<Result<Vec<String>, _>>()?;
+
+    Ok(decrypted_records)
 }
 
 fn serial_number_string(
@@ -113,8 +79,49 @@ fn serial_number_string(
     Ok(serial_number.to_string())
 }
 
+pub fn decrypt_record_data(
+    private_key: PrivateKey<CurrentNetwork>,
+    record: &str,
+    address: &str,
+) -> Result<String> {
+    let record_org_data: RecordOrgData = serde_json::from_str(record)?;
+    if record_org_data.record_meta.address.is_some() {
+        if &record_org_data.record_meta.address.clone().unwrap() != address {
+            return Ok("".to_string());
+        }
+    }
+    let record = RecordCiphertext::from_str(&record_org_data.record_meta.record_ciphertext)
+        .context("Error RecordCiphertext from_str")?;
+
+    if let Ok(plaintext) = record
+        .decrypt(
+            &ViewKey::<CurrentNetwork>::try_from(private_key)
+                .context("[decrypt_records] Error ViewKey try_from")?,
+        )
+        .context("[decrypt_records] Error record decrypt")
+    {
+        let serial_number = serial_number_string(
+            plaintext.clone(),
+            &private_key,
+            &record_org_data.record_meta.program_id,
+            &record_org_data.record_meta.identifier,
+        )
+        .unwrap_or_default();
+
+        let record_data = RecordData {
+            record: plaintext,
+            serial_number,
+            record_meta: record_org_data.record_meta,
+        };
+
+        return Ok(serde_json::to_string(&record_data)?);
+    }
+
+    Ok("".to_string())
+}
+
 pub fn decrypt_record(private_key: &str, record: &str) -> Result<String> {
-    let record = RecordCiphertext::from_str(record).context("Error ViewKey try_from")?;
+    let record = RecordCiphertext::from_str(record).context("Error RecordCiphertext try_from")?;
     let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
         .context("[decrypt_records] Error PrivateKey from_str")?;
     let plaintext = record
@@ -122,29 +129,49 @@ pub fn decrypt_record(private_key: &str, record: &str) -> Result<String> {
             &ViewKey::<CurrentNetwork>::try_from(private_key)
                 .context("[decrypt_records] Error ViewKey try_from")?,
         )
-        .context("[decrypt_records] Error PrivateKey from_str")?;
+        .context("[decrypt_records] Error record decrypt")?;
     Ok(plaintext.to_string())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{decrypt_record, decrypt_records};
+    use super::*;
 
     #[test]
     fn test_decrypt_records() {
         let private_key = "APrivateKey1zkpJkyYRGYtkeHDaFfwsKtUJzia7csiWhfBWPXWhXJzy9Ls";
-        let records_orgdata = "[{\"record_ciphertext\":\"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q\",\"program_id\":\"credits.aleo\",\"height\":380782,\"timestamp\":1699849707,\"block_hash\":\"ab1v3jzu7htha3mvccd8dazl99nz9lsl8yreq9hqutu3dwsedsfguqsmnfqms\",\"transaction_id\":\"at1ppz4s9x3yc0qata4vu8vucdrehggukejtzxv2ctaqcces5w7tcrqs6tyav\",\"transition_id\":\"au187jyp6xstgyxn0cylnhh4rxa04yekmwp87n9jfrdh7dxp49q3vpq6yklq4\",\"function_name\":\"transfer_public_to_private\",\"output_index\":0,\"input\":null,\"identifier\":\"credits\"}]";
-        if let Ok(records) = decrypt_records(private_key, records_orgdata) {
-            println!("records: {records}");
+        let mut records_orgdata = Vec::new();
+        records_orgdata.push(
+            r#"{"record_ciphertext":"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q","program_id":"aleoswap06.aleo","height":425004,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken","address":"aleo1j7qxyunfldj2lp8hsvy7mw5k8zaqgjfyr72x2gh3x4ewgae8v5gscf5jh3"}"#.to_string());
+        records_orgdata.push(
+            r#"{"record_ciphertext":"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q","program_id":"aleoswap06.aleo","height":425005,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken"}"#.to_string());
+        records_orgdata.push(
+                r#"{"record_ciphertext":"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q","program_id":"aleoswap06.aleo","height":425004,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken"}"#.to_string());
+        records_orgdata.push(
+                    r#"{"record_ciphertext":"record1qyqspasur7r5fmazgeu8j0syd82x2p8e66vempwsdepgcjuz8mqwn9ssqyxx66trwfhkxun9v35hguerqqpqzqzj4qnlagqqhr2jnehymmg7ve20gdqaqenrgrf38zh2zycsrnuwp9erjh6elpyd27vjlar4k70ulzcyhhxazlt7jqs82em2vf57pmmqjzqar9n","program_id":"aleoswap06.aleo","height":425005,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken"}"#.to_string());
+        let records = decrypt_records(private_key, records_orgdata).unwrap();
+        for record in records {
+            println!("record: {record}");
+        }
+    }
+
+    #[test]
+    fn test_decrypt_record_data() {
+        let private_key = "APrivateKey1zkpJkyYRGYtkeHDaFfwsKtUJzia7csiWhfBWPXWhXJzy9Ls";
+        let record = "record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q";
+        if let Ok(record) = decrypt_record(private_key, record) {
+            println!("record: {record}");
         }
     }
 
     #[test]
     fn test_decrypt_record() {
         let private_key = "APrivateKey1zkpJkyYRGYtkeHDaFfwsKtUJzia7csiWhfBWPXWhXJzy9Ls";
-        let record = "record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q";
-        if let Ok(record) = decrypt_record(private_key, record) {
-            println!("record: {record}");
-        }
+        let record = "{\"record_ciphertext\":\"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q\",\"program_id\":\"credits.aleo\",\"height\":380782,\"timestamp\":1699849707,\"block_hash\":\"ab1v3jzu7htha3mvccd8dazl99nz9lsl8yreq9hqutu3dwsedsfguqsmnfqms\",\"transaction_id\":\"at1ppz4s9x3yc0qata4vu8vucdrehggukejtzxv2ctaqcces5w7tcrqs6tyav\",\"transition_id\":\"au187jyp6xstgyxn0cylnhh4rxa04yekmwp87n9jfrdh7dxp49q3vpq6yklq4\",\"function_name\":\"transfer_public_to_private\",\"output_index\":0,\"input\":null,\"identifier\":\"credits\"}";
+        let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key).unwrap();
+        let address = AddressNative::try_from(private_key).context("Error Address try_from").unwrap();
+        let address = address.to_string();
+        let record = decrypt_record_data(private_key, record, &address).unwrap();
+        println!("record: {record}");
     }
 }
