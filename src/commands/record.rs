@@ -40,7 +40,7 @@ pub struct RecordMeta {
     pub function_name: String,
     pub output_index: u8,
     pub input: Option<Vec<String>>,
-    pub address: Option<String>,
+    pub address: String,
 }
 
 pub fn decrypt_records(private_key: &str, records_orgdata: Vec<String>) -> Result<Vec<String>> {
@@ -85,11 +85,11 @@ pub fn decrypt_record_data(
     address: &str,
 ) -> Result<String> {
     let record_org_data: RecordOrgData = serde_json::from_str(record)?;
-    if record_org_data.record_meta.address.is_some() {
-        if &record_org_data.record_meta.address.clone().unwrap() != address {
-            return Ok("".to_string());
-        }
+    if &record_org_data.record_meta.address != "" && record_org_data.record_meta.address != address
+    {
+        return Ok("".to_string());
     }
+
     let record = RecordCiphertext::from_str(&record_org_data.record_meta.record_ciphertext)
         .context("Error RecordCiphertext from_str")?;
 
@@ -166,10 +166,27 @@ mod tests {
 
     #[test]
     fn test_decrypt_record() {
-        let private_key = "APrivateKey1zkpJkyYRGYtkeHDaFfwsKtUJzia7csiWhfBWPXWhXJzy9Ls";
-        let record = "{\"record_ciphertext\":\"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q\",\"program_id\":\"credits.aleo\",\"height\":380782,\"timestamp\":1699849707,\"block_hash\":\"ab1v3jzu7htha3mvccd8dazl99nz9lsl8yreq9hqutu3dwsedsfguqsmnfqms\",\"transaction_id\":\"at1ppz4s9x3yc0qata4vu8vucdrehggukejtzxv2ctaqcces5w7tcrqs6tyav\",\"transition_id\":\"au187jyp6xstgyxn0cylnhh4rxa04yekmwp87n9jfrdh7dxp49q3vpq6yklq4\",\"function_name\":\"transfer_public_to_private\",\"output_index\":0,\"input\":null,\"identifier\":\"credits\"}";
+        let private_key = "APrivateKey1zkpHvQe27pZV91WMHDhKTVpzcU3jqoyqVCc7iPM7HzsUgjQ";
+        let record = r#"
+        {
+            "record_ciphertext": "record1qyqsp8httfd678ztpu92nxqenvqdgj3qspl0hppv9qr29ggjtdqglng0qyxx66trwfhkxun9v35hguerqqpqzqz4lyucm3d4aztjk080fg6j2zvd0gqechlxkl6t5n3pfwrgcmh2pd9dxkmu7htj3mzhfym52t0ftavqj5yyhpf83yuct2g03prvqygqky07vuu",
+            "program_id": "credits.aleo",
+            "height": 13043,
+            "timestamp": 1703152900,
+            "block_hash": "ab16008ac8qqq77npy6vwyk53qp5csvedrclml8rjsk2pxhuftspsqqsng0lq",
+            "transaction_id": "at1p98x8t80qvl9jwqeymsp07xl689guympmvarc47mexyydkd3avqqwxssdt",
+            "transition_id": "au10e48x9z40yfp30k2u3dvux4q74kzcetd56mj4wlg69c6e9dnuyqstkflqj",
+            "function_name": "transfer_public_to_private",
+            "output_index": 0,
+            "input": null,
+            "identifier": "credits",
+            "address": ""
+          }
+        "#;
         let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key).unwrap();
-        let address = AddressNative::try_from(private_key).context("Error Address try_from").unwrap();
+        let address = AddressNative::try_from(private_key)
+            .context("Error Address try_from")
+            .unwrap();
         let address = address.to_string();
         let record = decrypt_record_data(private_key, record, &address).unwrap();
         println!("record: {record}");
