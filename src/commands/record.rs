@@ -40,6 +40,7 @@ pub struct RecordMeta {
     pub function_name: String,
     pub output_index: u8,
     pub input: Option<Vec<String>>,
+    #[serde(default)]
     pub address: String,
 }
 
