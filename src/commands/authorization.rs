@@ -88,13 +88,15 @@ pub fn transaction_for_authorize(
 
     // let execute_authorization: Authorization = serde_json::from_str::<execute_authorization_str>.unwrap();
     let execute_authorization: Authorization =
-        serde_json::from_str(execute_authorization_str).unwrap();
-    let fee_authorization: Authorization = serde_json::from_str(fee_authorization_str).unwrap();
+        serde_json::from_str(execute_authorization_str).context("execute authorization error")?;
+    let fee_authorization: Option<AuthorizationNative> = if fee_authorization_str.is_empty() {
+        None
+    } else {
+        let fee_authorization: Authorization =
+            serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+        Some(AuthorizationNative::from(fee_authorization))
+    };
 
-    // let execute_authorization = Authorization::<CurrentNetwork>::from_str(execute_authorization)
-    //     .context("execute_authorization open error")?;
-    // let fee_authorization = Authorization::<CurrentNetwork>::from_str(fee_authorization)
-    //     .context("fee_authorization open error")?;
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
         .context("ConsensusStore open error")?;
@@ -103,7 +105,7 @@ pub fn transaction_for_authorize(
     let transaction = vm
         .execute_authorization(
             AuthorizationNative::from(execute_authorization),
-            Some(AuthorizationNative::from(fee_authorization)),
+            fee_authorization,
             Some(query),
             rng,
         )

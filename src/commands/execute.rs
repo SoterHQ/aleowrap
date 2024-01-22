@@ -57,15 +57,17 @@ pub fn execute(
     let priority_fee_in_microcredits = priority_fee_in_microcredits.unwrap_or(0);
 
     // Create a new transaction.
-    let transaction = vm.execute(
-        &private_key,
-        (program_id, function),
-        input_list.iter(),
-        fee_record,
-        priority_fee_in_microcredits,
-        Some(query),
-        rng,
-    )?;
+    let transaction = vm
+        .execute(
+            &private_key,
+            (program_id, function),
+            input_list.iter(),
+            fee_record,
+            priority_fee_in_microcredits,
+            Some(query),
+            rng,
+        )
+        .context("execute error")?;
 
     Ok(transaction.to_string())
 }
