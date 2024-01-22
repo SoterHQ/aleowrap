@@ -25,6 +25,9 @@ pub use record::*;
 mod account;
 pub use account::*;
 
+mod authorization;
+pub use authorization::*;
+
 mod decrypt;
 pub use decrypt::*;
 

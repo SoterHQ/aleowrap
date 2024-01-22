@@ -102,4 +102,154 @@ mod tests {
         let handle_res =
             commands::Command::handle_transaction(broadcast, dry_run, None, transaction, operation);
     }
+
+    #[test]
+    fn transaction_for_authorize() {
+        let execute_authorization = r#"
+        {
+          "requests": [
+            {
+              "signer": "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns",
+              "network": "3u16",
+              "program": "credits.aleo",
+              "function": "transfer_public",
+              "input_ids": [
+                {
+                  "type": "public",
+                  "id": "264201493672141193246026289752848473057898187397519902385690573796862651709field"
+                },
+                {
+                  "type": "public",
+                  "id": "4672454229551230639878883934443616830946068006433266916731576687154591037800field"
+                }
+              ],
+              "inputs": [
+                "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns",
+                "1000000u64"
+              ],
+              "signature": "sign1fdc76rq02mrel8y7svrmxptgq7xxcy9dxtzatpuhqh7anmgdnqpkwdef3wr778prgwkd0xff22sv9np5alk8u2q9q04jfzrml9nk5pq32v75vccfdluwzulwl6p3h9254xvwn0unk8rj97pg26sy763cp7hlx2fvrlm38032pywgm9tdc969sn7nv3md34e9z9qergtruxmsj4xluje",
+              "sk_tag": "8392991161530139852499528373585292010003647568520892791643421634970601392470field",
+              "tvk": "1938558642764844183116870565927129923669795809229530005945785882771040563969field",
+              "tcm": "4373082709237433514833723725921818283650078036262844572167322365509994941300field"
+            }
+          ],
+          "transitions": [
+            {
+              "id": "au1vygln7g2rqllpqkz7kqvc6vwt9gehay6qqj4kpqe55d2yav5m59sq2fdxs",
+              "program": "credits.aleo",
+              "function": "transfer_public",
+              "inputs": [
+                {
+                  "type": "public",
+                  "id": "264201493672141193246026289752848473057898187397519902385690573796862651709field",
+                  "value": "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns"
+                },
+                {
+                  "type": "public",
+                  "id": "4672454229551230639878883934443616830946068006433266916731576687154591037800field",
+                  "value": "1000000u64"
+                }
+              ],
+              "outputs": [
+                {
+                  "type": "future",
+                  "id": "1360104971573358168604317930355301104798661964569949427608399033686302929686field",
+                  "value": "{\n  program_id: credits.aleo,\n  function_name: transfer_public,\n  arguments: [\n    aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns,\n    aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns,\n    1000000u64\n  ]\n}"
+                }
+              ],
+              "tpk": "676801447136946012454088347547579812777648907728776759096552822693925462476group",
+              "tcm": "4373082709237433514833723725921818283650078036262844572167322365509994941300field"
+            }
+          ]
+        }
+    "#;
+        let fee_authorization = r#"
+        {
+          "requests": [
+            {
+              "signer": "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns",
+              "network": "3u16",
+              "program": "credits.aleo",
+              "function": "fee_private",
+              "input_ids": [
+                {
+                  "type": "record",
+                  "commitment": "4142357621618165382785656199390665378112333759647272234574236988903160388672field",
+                  "gamma": "7867660999110392747333410929887225566836466436102234145982895559666993758370group",
+                  "serial_number": "6366350026234363281080414513579804226775808990526122814088901313662746287524field",
+                  "tag": "1286638765316415404583317069614464452739731563138800559447340289722792773094field"
+                },
+                {
+                  "type": "public",
+                  "id": "5445790547837169542326027825971670399676784208084910919166167910930486530226field"
+                },
+                {
+                  "type": "public",
+                  "id": "7667212157673637072889975920308690717319155256919143999343715938806753559938field"
+                },
+                {
+                  "type": "public",
+                  "id": "271351975104062326719984964835074718872047281678393582138653130346228144176field"
+                }
+              ],
+              "inputs": [
+                "{\n  owner: aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns.private,\n  microcredits: 99997790u64.private,\n  _nonce: 4901649381669288963267474569536076867499774384164203571486669532524236694359group.public\n}",
+                "4000000u64",
+                "3000000u64",
+                "6966383534369335761476294285383037719711239836004647730380638400751573886112field"
+              ],
+              "signature": "sign15444pyhpck9n239wn0kp0tyynkwqq3nrr04auyw2rp32ksawlqpnn7x263wskyluhgereglk6ljekdzwlgm8ad2wyjj3dw06dgnagqg32v75vccfdluwzulwl6p3h9254xvwn0unk8rj97pg26sy763cp7hlx2fvrlm38032pywgm9tdc969sn7nv3md34e9z9qergtruxmsjjvmuen",
+              "sk_tag": "8392991161530139852499528373585292010003647568520892791643421634970601392470field",
+              "tvk": "4982331855506069096126448697165661376897432028924814784973037147896406868601field",
+              "tcm": "5597421047161054600048537217061477827665510528502055340387612689122115247679field"
+            }
+          ],
+          "transitions": [
+            {
+              "id": "au1ktvsjhh56sqq2y587gwcul9xpdcyc0dxxfr6zemt7ypva8unygzsxazztj",
+              "program": "credits.aleo",
+              "function": "fee_private",
+              "inputs": [
+                {
+                  "type": "record",
+                  "id": "6366350026234363281080414513579804226775808990526122814088901313662746287524field",
+                  "tag": "1286638765316415404583317069614464452739731563138800559447340289722792773094field"
+                },
+                {
+                  "type": "public",
+                  "id": "5445790547837169542326027825971670399676784208084910919166167910930486530226field",
+                  "value": "4000000u64"
+                },
+                {
+                  "type": "public",
+                  "id": "7667212157673637072889975920308690717319155256919143999343715938806753559938field",
+                  "value": "3000000u64"
+                },
+                {
+                  "type": "public",
+                  "id": "271351975104062326719984964835074718872047281678393582138653130346228144176field",
+                  "value": "6966383534369335761476294285383037719711239836004647730380638400751573886112field"
+                }
+              ],
+              "outputs": [
+                {
+                  "type": "record",
+                  "id": "3143191914553262826848673201154169140152431968601418421037701073056854487666field",
+                  "checksum": "3950035425684469536582213274226216188803367771042199911420923171007509525758field",
+                  "value": "record1qyqsqgtevhm5pvc27pjnwmgamqrjhtgplua4wuaapress03q763sqyc2qyxx66trwfhkxun9v35hguerqqpqzqxytm8r3xq9hdflvv2sca3mrf4c8kfpfj323yahccuvn3h92cxeqfpkdz7jfct9gcc7g908ertkjnmsyh8djeqr89ydtj0l2a8ka6zpz2248e2"
+                }
+              ],
+              "tpk": "435423365826683987978773029746560605823855858333463792879429520970021194208group",
+              "tcm": "5597421047161054600048537217061477827665510528502055340387612689122115247679field"
+            }
+          ]
+        }
+    "#;
+
+        let query = Some("https://testnet.sotertech.io");
+
+        let transaction =
+            commands::transaction_for_authorize(execute_authorization, fee_authorization, query);
+        println!("transfer transaction: {}", transaction.unwrap());
+    }
 }
