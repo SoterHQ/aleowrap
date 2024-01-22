@@ -15,7 +15,10 @@
 // along with the Aleo SDK library. If not, see <https://www.gnu.org/licenses/>.
 
 use serde::{Deserialize, Serialize};
+use snarkvm_console::program::ProgramID;
 use std::str::FromStr;
+
+use crate::Command;
 
 use super::CurrentNetwork;
 use anyhow::{Context, Result};
@@ -70,6 +73,7 @@ impl FromStr for Authorization {
 }
 
 pub fn transaction_for_authorize(
+    program_id: &str,
     execute_authorization_str: &str,
     fee_authorization_str: &str,
     query: Option<&str>,
@@ -79,6 +83,14 @@ pub fn transaction_for_authorize(
         None => "https://api.explorer.aleo.org/v1",
     };
 
+    // Initialize the VM.
+    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+    let vm = VM::from(store)?;
+    
+    let program_id = ProgramID::from_str(program_id)?;
+    // Load the program and it's imports into the process.
+    Command::load_program(&query, &mut vm.process().write(), &program_id)?;
+    
     // Specify the query
     let query = Query::from(query);
 
@@ -96,11 +108,6 @@ pub fn transaction_for_authorize(
             serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
         Some(AuthorizationNative::from(fee_authorization))
     };
-
-    // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
-        .context("ConsensusStore open error")?;
-    let vm = VM::from(store)?;
 
     let transaction = vm
         .execute_authorization(
