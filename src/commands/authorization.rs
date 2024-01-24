@@ -99,8 +99,12 @@ pub fn transaction_for_authorize(
     // Initialize an RNG.
     let rng = &mut rand::thread_rng();
 
+    // let execute_authorization: Authorization =
+    //     serde_json::from_str(&reorder(execute_authorization_str))
+    //         .context("execute authorization error")?;
     let execute_authorization: Authorization =
-        serde_json::from_str(&reorder(execute_authorization_str)).context("execute authorization error")?;
+        serde_json::from_str(execute_authorization_str)
+            .context("execute authorization error")?;
     let fee_authorization: Option<AuthorizationNative> = if fee_authorization_str.is_empty() {
         None
     } else {
@@ -139,5 +143,7 @@ fn reorder(json_str: &str) -> String {
     }
 
     json_obj["transitions"] = Value::Array(new_transitions);
-    serde_json::to_string_pretty(&json_obj).unwrap()
+    let newjson_obj = serde_json::to_string_pretty(&json_obj).unwrap();
+    println!("transitions ==========\n {newjson_obj}");
+    newjson_obj
 }

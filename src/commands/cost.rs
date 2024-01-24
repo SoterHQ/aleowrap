@@ -42,7 +42,6 @@ pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) 
 }
 
 pub fn execution_cost(
-    private_key: &str,
     program_id: &str,
     function: &str,
     inputs: Vec<String>,
@@ -55,7 +54,8 @@ pub fn execution_cost(
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
     let vm = VM::from(store)?;
 
-    let private_key = PrivateKey::from_str(private_key)?;
+    // let private_key = PrivateKey::from_str(private_key)?;
+    let private_key = PrivateKey::new(rng).unwrap();
     let program_id = ProgramID::from_str(program_id)?;
     let function_name = Identifier::from_str(function)?;
     let query = match query {
