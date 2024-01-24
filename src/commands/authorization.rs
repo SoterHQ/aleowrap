@@ -138,9 +138,6 @@ fn reorder(json_str: &str) -> String {
         }
     }
 
-    // 将 transitions 替换为 new_transitions
     json_obj["transitions"] = Value::Array(new_transitions);
-    // 重新生成 JSON 字符串
-    let new_json_str = serde_json::to_string_pretty(&json_obj).unwrap();
-    new_json_str
+    serde_json::to_string_pretty(&json_obj).unwrap()
 }
