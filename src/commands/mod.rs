@@ -117,29 +117,6 @@ impl Command {
         Ok(())
     }
 
-    /// Parse the package from the directory.
-    // fn parse_package(
-    //     program_id: ProgramID<CurrentNetwork>,
-    //     path: Option<String>,
-    // ) -> Result<Package<CurrentNetwork>> {
-    //     // Instantiate a path to the directory containing the manifest file.
-    //     let directory = match path {
-    //         Some(path) => PathBuf::from_str(&path)?,
-    //         None => std::env::current_dir()?,
-    //     };
-
-    //     // Load the package.
-    //     let package = Package::open(&directory)?;
-
-    //     ensure!(
-    //         package.program_id() == &program_id,
-    //         "The program name in the package does not match the specified program name"
-    //     );
-
-    //     // Return the package.
-    //     Ok(package)
-    // }
-
     /// Determine if the transaction should be broadcast or displayed to user.
     pub fn handle_transaction(
         broadcast: Option<String>,

@@ -15,6 +15,7 @@
 // along with the Aleo SDK library. If not, see <https://www.gnu.org/licenses/>.
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use snarkvm_console::program::ProgramID;
 use std::str::FromStr;
 
@@ -86,11 +87,11 @@ pub fn transaction_for_authorize(
     // Initialize the VM.
     let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
     let vm = VM::from(store)?;
-    
+
     let program_id = ProgramID::from_str(program_id)?;
     // Load the program and it's imports into the process.
     Command::load_program(&query, &mut vm.process().write(), &program_id)?;
-    
+
     // Specify the query
     let query = Query::from(query);
 
@@ -98,9 +99,8 @@ pub fn transaction_for_authorize(
     // Initialize an RNG.
     let rng = &mut rand::thread_rng();
 
-    // let execute_authorization: Authorization = serde_json::from_str::<execute_authorization_str>.unwrap();
     let execute_authorization: Authorization =
-        serde_json::from_str(execute_authorization_str).context("execute authorization error")?;
+        serde_json::from_str(&reorder(execute_authorization_str)).context("execute authorization error")?;
     let fee_authorization: Option<AuthorizationNative> = if fee_authorization_str.is_empty() {
         None
     } else {
@@ -119,4 +119,28 @@ pub fn transaction_for_authorize(
         .context("execute error")?;
 
     Ok(transaction.to_string())
+}
+
+fn reorder(json_str: &str) -> String {
+    let mut json_obj: Value = serde_json::from_str(json_str).expect("Failed to parse JSON");
+    let mut json_obj_clone: Value = json_obj.clone();
+
+    let requests = json_obj_clone["requests"].as_array_mut().unwrap();
+    let transitions = json_obj["transitions"].as_array_mut().unwrap();
+    let mut new_transitions: Vec<Value> = Vec::new();
+
+    for request in requests {
+        let tcm = request["tcm"].as_str().unwrap();
+        for transition in &mut *transitions {
+            if tcm == transition["tcm"].as_str().unwrap() {
+                new_transitions.push(transition.clone());
+            }
+        }
+    }
+
+    // 将 transitions 替换为 new_transitions
+    json_obj["transitions"] = Value::Array(new_transitions);
+    // 重新生成 JSON 字符串
+    let new_json_str = serde_json::to_string_pretty(&json_obj).unwrap();
+    new_json_str
 }

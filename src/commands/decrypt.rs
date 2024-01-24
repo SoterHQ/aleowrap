@@ -86,12 +86,11 @@ pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String>
 
 #[cfg(test)]
 mod tests {
-    use rand::{rngs::StdRng, Rng, SeedableRng};
-
     use super::decrypt_ciphertext;
 
     #[test]
     fn test_decrypt_ciphertext() {
-        let ss = decrypt_ciphertext("APrivateKey1zkp6ZYopKYbJakUtmwgjZ6DAkbvzW592msjZX4Q8SUbk9sN", "ciphertext1qgq9z7ks2dzdwpc7r4ul323u45dyg060na43r4fhfm0ctkmkx4u0xzgpkpnekdskggxnj5fh4yux9sd3ca42nclv7dfr0szx8new6z4hpg6fyhy5");
+        let plaintext = decrypt_ciphertext("APrivateKey1zkp6ZYopKYbJakUtmwgjZ6DAkbvzW592msjZX4Q8SUbk9sN", "ciphertext1qgq9z7ks2dzdwpc7r4ul323u45dyg060na43r4fhfm0ctkmkx4u0xzgpkpnekdskggxnj5fh4yux9sd3ca42nclv7dfr0szx8new6z4hpg6fyhy5");
+        println!("plaintext: {}", plaintext.unwrap());
     }
 }
