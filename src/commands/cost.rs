@@ -20,6 +20,7 @@ use super::{deploy::resolve_imports, Command, CurrentAleo, CurrentNetwork};
 pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) -> Result<String> {
     let program = Program::from_str(program)?;
     let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    println!("resolve_imports");
     let _ = resolve_imports(&mut process, &program, imports);
     let rng = &mut StdRng::from_entropy();
 

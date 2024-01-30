@@ -105,6 +105,8 @@ pub fn resolve_imports(
             // Get the program string
             let program_id = program_id.to_string();
             if let Some(import_string) = imports.get(&program_id) {
+                println!("program_id: {program_id}");
+                println!("import_string: {import_string}");
                 if &program_id != "credits.aleo" {
                     // crate::log(&format!("Importing program: {}", program_id));
                     let import = Program::<CurrentNetwork>::from_str(&import_string)
