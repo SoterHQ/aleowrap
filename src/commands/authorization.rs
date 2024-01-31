@@ -14,11 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with the Aleo SDK library. If not, see <https://www.gnu.org/licenses/>.
 
+use rand::rngs::StdRng;
+use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use snarkvm_console::program::ProgramID;
+use snarkvm_console::program::ProgramOwner;
+use snarkvm_ledger_block::Transaction;
+use snarkvm_synthesizer::Process;
+use snarkvm_synthesizer::Program;
+use std::collections::HashMap;
 use std::str::FromStr;
 
+use crate::commands::CurrentAleo;
+use crate::resolve_imports;
 use crate::Command;
 
 use super::CurrentNetwork;
@@ -118,6 +127,57 @@ pub fn transaction_for_authorize(
             rng,
         )
         .context("execute error")?;
+
+    Ok(transaction.to_string())
+}
+
+pub fn deploy_for_authorize(
+    program: &str,
+    imports: Option<HashMap<String, String>>,
+    owner_str: &str,
+    fee_authorization_str: &str,
+    query: Option<&str>,
+) -> Result<String> {
+    let query = match query {
+        Some(query) => query,
+        None => "https://api.explorer.aleo.org/v1",
+    };
+
+    // Specify the query
+    let query = Query::from(query);
+
+    let program = Program::from_str(program)?;
+
+    let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    println!("Checking program imports are valid and add them to the process");
+    let _ = resolve_imports(&mut process, &program, imports);
+    let rng = &mut StdRng::from_entropy();
+
+    println!("Creating deployment");
+    // Generate the deployment
+    let deployment = process
+        .deploy::<CurrentAleo, _>(&program, rng)
+        .context("Error process deploy")?;
+
+    let rng = &mut rand::thread_rng();
+
+    // Initialize the VM.
+    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
+        .context("Error ConsensusStore")?;
+    let vm = VM::from(store).context("Error VM")?;
+
+
+    let fee_authorization: Authorization =
+            serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+
+    let fee = vm.execute_fee_authorization(AuthorizationNative::from(fee_authorization), Some(query), rng)?;
+
+    // Construct the owner.
+    let owner = ProgramOwner::<CurrentNetwork>::from_str(owner_str).context("Error ProgramOwner")?;
+
+    // Create a new transaction.
+    let transaction =
+        Transaction::from_deployment(owner, deployment, fee).context("Error from_deployment")?;
 
     Ok(transaction.to_string())
 }

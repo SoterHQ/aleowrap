@@ -2512,4 +2512,105 @@ finalize set_approval_for_all:
         );
         println!("transfer transaction: {}", transaction.unwrap());
     }
+
+
+    #[test]
+    fn deploy_for_authorize(){
+        let query = Some("https://aleochain.sotertech.io");
+        let program = r#"
+        program hello_world_3db52e57.aleo;
+
+
+
+function main:
+    input r0 as u32.public;
+    input r1 as u32.private;
+    add r0 r1 into r2;
+    output r2 as u32.private;
+        "#;
+        let owner_str = r#"
+        {
+            "address": "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns",
+            "signature": "sign1m4zt4zc2rnjl3c0hr5jgc9vsft2q8kkgy8454mnqvk5hwzjm3ypcg3wh4dxnlw5fq9ld96ykwka6uj7pnggw36ggr5uapk5z6lq0jqg32v75vccfdluwzulwl6p3h9254xvwn0unk8rj97pg26sy763cp7hlx2fvrlm38032pywgm9tdc969sn7nv3md34e9z9qergtruxmsjk2g7n6"
+          }
+        "#;
+
+        let fee_authorization_str = r#"
+        {
+              "requests": [
+                {
+                  "signer": "aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns",
+                  "network": "3u16",
+                  "program": "credits.aleo",
+                  "function": "fee_public",
+                  "input_ids": [
+                    {
+                      "type": "public",
+                      "id": "7461282104433366449900697799474885740026008139066330886969703322575758055217field"
+                    },
+                    {
+                      "type": "public",
+                      "id": "3934803756888630496501816151050540292915193353802102899830239800849008699942field"
+                    },
+                    {
+                      "type": "public",
+                      "id": "2704568184889906689601787863190035940222705911013024881738685099334624579190field"
+                    }
+                  ],
+                  "inputs": [
+                    "5000000u64",
+                    "1000000u64",
+                    "5143289311869305992819731554276892145943690667501397210953951405716358737411field"
+                  ],
+                  "signature": "sign1lat9vedqjhyjgln2ygzclxj9fe25kzmdlzfcmdt3x63krfhr3vptug7fjygl99qzk5yjsn9k30fhpnwjj3rsnldhshwtlauj6q525pq32v75vccfdluwzulwl6p3h9254xvwn0unk8rj97pg26sy763cp7hlx2fvrlm38032pywgm9tdc969sn7nv3md34e9z9qergtruxmsj002rpy",
+                  "sk_tag": "8392991161530139852499528373585292010003647568520892791643421634970601392470field",
+                  "tvk": "7038345925362083712533035838095457463996994870127572591579114932265713415059field",
+                  "tcm": "28343811668558083092323437539573502422062762506109415690591179678071251191field"
+                }
+              ],
+              "transitions": [
+                {
+                  "id": "au1g0qxr5z4lgltpnmalltcnx3ddy62rn2vmc3x53lymulsyydeyy8scvun5t",
+                  "program": "credits.aleo",
+                  "function": "fee_public",
+                  "inputs": [
+                    {
+                      "type": "public",
+                      "id": "7461282104433366449900697799474885740026008139066330886969703322575758055217field",
+                      "value": "5000000u64"
+                    },
+                    {
+                      "type": "public",
+                      "id": "3934803756888630496501816151050540292915193353802102899830239800849008699942field",
+                      "value": "1000000u64"
+                    },
+                    {
+                      "type": "public",
+                      "id": "2704568184889906689601787863190035940222705911013024881738685099334624579190field",
+                      "value": "5143289311869305992819731554276892145943690667501397210953951405716358737411field"
+                    }
+                  ],
+                  "outputs": [
+                    {
+                      "type": "future",
+                      "id": "5847895945256167231966395890184269085803708731475986132553294535276357508888field",
+                      "value": "{\n  program_id: credits.aleo,\n  function_name: fee_public,\n  arguments: [\n    aleo1yr9n35r0h6gazjfhajvy73u87f6nhc24dvhwel67lykrapf8fygsqv62ns,\n    6000000u64\n  ]\n}"
+                    }
+                  ],
+                  "tpk": "3662889093089943591024614326755097771820280618862272357191320327772365699148group",
+                  "tcm": "28343811668558083092323437539573502422062762506109415690591179678071251191field"
+                }
+              ]
+            }
+        "#;
+
+        let transaction = commands::deploy_for_authorize(
+            program,
+            None,
+            owner_str,
+            fee_authorization_str,
+            query,
+        );
+        println!("transfer transaction: {}", transaction.unwrap());
+    }
 }
