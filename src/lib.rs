@@ -2513,9 +2513,8 @@ finalize set_approval_for_all:
         println!("transfer transaction: {}", transaction.unwrap());
     }
 
-
     #[test]
-    fn deploy_for_authorize(){
+    fn deploy_for_authorize() {
         let query = Some("https://aleochain.sotertech.io");
         let program = r#"
         program hello_world_3db52e57.aleo;
@@ -2604,13 +2603,8 @@ function main:
             }
         "#;
 
-        let transaction = commands::deploy_for_authorize(
-            program,
-            None,
-            owner_str,
-            fee_authorization_str,
-            query,
-        );
+        let transaction =
+            commands::deploy_for_authorize(program, None, owner_str, fee_authorization_str, query);
         println!("transfer transaction: {}", transaction.unwrap());
     }
 }
