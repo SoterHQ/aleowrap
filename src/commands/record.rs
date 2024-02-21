@@ -44,15 +44,15 @@ pub struct RecordMeta {
     pub address: String,
 }
 
-pub fn decrypt_records(private_key: &str, records_orgdata: Vec<String>) -> Result<Vec<String>> {
-    let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
+pub fn decrypt_records(view_key: &str, records_orgdata: Vec<String>) -> Result<Vec<String>> {
+    let view_key = ViewKey::<CurrentNetwork>::from_str(view_key)
         .context("[decrypt_records] Error PrivateKey from_str")?;
-    let address = AddressNative::try_from(private_key).context("Error Address try_from")?;
+    let address = AddressNative::try_from(view_key).context("Error Address try_from")?;
     let address = address.to_string();
 
     let decrypted_records = records_orgdata
         .par_iter()
-        .map(|record| decrypt_record_data(private_key, record, &address))
+        .map(|record| decrypt_record_data(view_key, record, &address))
         .collect::<Result<Vec<String>, _>>()?;
 
     Ok(decrypted_records)
@@ -81,7 +81,7 @@ fn serial_number_string(
 }
 
 pub fn decrypt_record_data(
-    private_key: PrivateKey<CurrentNetwork>,
+    view_key: ViewKey<CurrentNetwork>,
     record: &str,
     address: &str,
 ) -> Result<String> {
@@ -96,22 +96,22 @@ pub fn decrypt_record_data(
 
     if let Ok(plaintext) = record
         .decrypt(
-            &ViewKey::<CurrentNetwork>::try_from(private_key)
+            &ViewKey::<CurrentNetwork>::try_from(view_key)
                 .context("[decrypt_records] Error ViewKey try_from")?,
         )
         .context("[decrypt_records] Error record decrypt")
     {
-        let serial_number = serial_number_string(
-            plaintext.clone(),
-            &private_key,
-            &record_org_data.record_meta.program_id,
-            &record_org_data.record_meta.identifier,
-        )
-        .unwrap_or_default();
+        // let serial_number = serial_number_string(
+        //     plaintext.clone(),
+        //     &private_key,
+        //     &record_org_data.record_meta.program_id,
+        //     &record_org_data.record_meta.identifier,
+        // )
+        // .unwrap_or_default();
 
         let record_data = RecordData {
             record: plaintext,
-            serial_number,
+            serial_number: "".to_string(),
             record_meta: record_org_data.record_meta,
         };
 
