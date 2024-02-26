@@ -116,7 +116,6 @@ pub fn transaction_for_authorize(
     } else {
         let fee_authorization: Authorization =
             serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
-        println!("fee_authorization ==========\n {fee_authorization_str}");
         Some(AuthorizationNative::from(fee_authorization))
     };
 
@@ -148,7 +147,6 @@ pub fn deploy_for_authorize(
     let query = Query::from(query);
 
     let program = Program::from_str(program)?;
-    println!("deploy_for_authorize program ==========\n {program}");
 
     let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
     println!("Checking program imports are valid and add them to the process");
@@ -170,7 +168,6 @@ pub fn deploy_for_authorize(
 
     let fee_authorization: Authorization =
         serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
-    println!("deploy_for_authorize fee_authorization_str ==========\n {fee_authorization_str}");
 
     let fee = vm.execute_fee_authorization(
         AuthorizationNative::from(fee_authorization),
@@ -207,7 +204,5 @@ fn reorder(json_str: &str) -> String {
     }
 
     json_obj["transitions"] = Value::Array(new_transitions);
-    let newjson_obj = serde_json::to_string_pretty(&json_obj).unwrap();
-    println!("transitions ==========\n {newjson_obj}");
-    newjson_obj
+    serde_json::to_string_pretty(&json_obj).unwrap()
 }
