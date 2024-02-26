@@ -116,6 +116,7 @@ pub fn transaction_for_authorize(
     } else {
         let fee_authorization: Authorization =
             serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+        println!("fee_authorization ==========\n {fee_authorization_str}");
         Some(AuthorizationNative::from(fee_authorization))
     };
 
@@ -147,6 +148,7 @@ pub fn deploy_for_authorize(
     let query = Query::from(query);
 
     let program = Program::from_str(program)?;
+    println!("deploy_for_authorize program ==========\n {program}");
 
     let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
     println!("Checking program imports are valid and add them to the process");
@@ -166,14 +168,19 @@ pub fn deploy_for_authorize(
         .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 
-
     let fee_authorization: Authorization =
-            serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+        serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+    println!("deploy_for_authorize fee_authorization_str ==========\n {fee_authorization_str}");
 
-    let fee = vm.execute_fee_authorization(AuthorizationNative::from(fee_authorization), Some(query), rng)?;
+    let fee = vm.execute_fee_authorization(
+        AuthorizationNative::from(fee_authorization),
+        Some(query),
+        rng,
+    )?;
 
     // Construct the owner.
-    let owner = ProgramOwner::<CurrentNetwork>::from_str(owner_str).context("Error ProgramOwner")?;
+    let owner =
+        ProgramOwner::<CurrentNetwork>::from_str(owner_str).context("Error ProgramOwner")?;
 
     // Create a new transaction.
     let transaction =
