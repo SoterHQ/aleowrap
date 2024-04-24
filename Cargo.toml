@@ -17,25 +17,25 @@ serde_json = "1.0"
 version = "0.8.8"
 
 [dependencies.snarkvm-console]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-circuit]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-synthesizer]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-ledger-block]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-ledger-query]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-ledger-store]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.snarkvm-utilities]
-version = "=0.16.18"
+version = "=0.16.19"
 
 [dependencies.anyhow]
 version = "1.0.75"
