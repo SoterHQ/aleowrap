@@ -10,9 +10,10 @@ use snarkvm_ledger_store::{
     helpers::memory::{BlockMemory, ConsensusMemory},
     ConsensusStore,
 };
+// deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost,
 use snarkvm_synthesizer::{
-    deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost, Process, Program,
-    VM,
+    process::{deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost},
+    Process, Program, VM,
 };
 
 use super::{deploy::resolve_imports, Command, CurrentAleo, CurrentNetwork};
@@ -30,13 +31,14 @@ pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) 
         .deploy::<CurrentAleo, _>(&program, rng)
         .context("Error process deploy")?;
 
-    let (minimum_deployment_cost, (storage_cost, finalize_cost)) =
+    let (minimum_deployment_cost, (storage_cost, synthesis_cost, namespace_cost)) =
         vm_deployment_cost(&deployment).context("Error deployment_cost")?;
 
     let json_object = serde_json::json!({
         "minimum_deployment_cost":minimum_deployment_cost,
         "storage_cost":storage_cost,
-        "finalize_cost":finalize_cost,
+        "synthesis_cost":synthesis_cost,
+        "namespace_cost":namespace_cost,
     });
 
     Ok(json_object.to_string())
@@ -85,8 +87,9 @@ pub fn execution_cost(
         .prove_execution::<CurrentAleo, _>(&locator, &mut StdRng::from_entropy())
         .context("execution_cost prove_execution load")?;
 
+    let process = Process::<CurrentNetwork>::load().context("Error process load")?;
     let (minimum_execution_cost, (storage_cost, finalize_cost)) =
-        vm_execution_cost(&vm, &execution)?;
+        vm_execution_cost(&process, &execution)?;
 
     let json_object = serde_json::json!({
         "minimum_execution_cost":minimum_execution_cost,

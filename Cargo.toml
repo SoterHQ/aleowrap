@@ -17,25 +17,32 @@ serde_json = "1.0"
 version = "0.8.8"
 
 [dependencies.snarkvm-console]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-circuit]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-synthesizer]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-ledger-block]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-ledger-query]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-ledger-store]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.snarkvm-utilities]
-version = "=0.16.19"
+git = "https://github.com/AleoHQ/snarkVM.git"
+rev = "43abe1b"
 
 [dependencies.anyhow]
 version = "1.0.75"
@@ -60,3 +67,7 @@ version = "0.3"
 [dependencies.tracing-subscriber]
 version = "0.3"
 features = [ "env-filter", "parking_lot", "time", "local-time" ]
+
+[features]
+mainnetv0 = []
+testnetv0 = []

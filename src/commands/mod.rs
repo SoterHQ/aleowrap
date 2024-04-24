@@ -1,5 +1,11 @@
+#[cfg(feature = "mainnetv0")]
 type CurrentAleo = snarkvm_circuit::AleoV0;
-type CurrentNetwork = snarkvm_console::network::Testnet3;
+#[cfg(feature = "testnetv0")]
+type CurrentAleo = snarkvm_circuit::AleoTestnetV0;
+#[cfg(feature = "mainnetv0")]
+type CurrentNetwork = snarkvm_console::network::MainnetV0;
+#[cfg(feature = "testnetv0")]
+type CurrentNetwork = snarkvm_console::network::TestnetV0;
 
 mod cost;
 pub use cost::*;

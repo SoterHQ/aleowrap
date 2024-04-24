@@ -7,7 +7,7 @@ use snarkvm_console::{account::PrivateKey, program::ProgramOwner};
 use snarkvm_ledger_block::Transaction;
 use snarkvm_ledger_query::Query;
 use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
-use snarkvm_synthesizer::{deployment_cost, Process, Program, VM};
+use snarkvm_synthesizer::{process::deployment_cost, Process, Program, VM};
 
 use super::{Command, CurrentAleo, CurrentNetwork};
 
@@ -56,7 +56,7 @@ pub fn deploy(
     let vm = VM::from(store).context("Error VM")?;
 
     // Compute the minimum deployment cost.
-    let (base_fee_in_microcredits, (_, _)) =
+    let (base_fee_in_microcredits, (_, _, _)) =
         deployment_cost(&deployment).context("Error deployment_cost")?;
 
     // Prepare the fees.
