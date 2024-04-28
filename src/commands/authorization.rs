@@ -90,7 +90,7 @@ pub fn transaction_for_authorize(
 ) -> Result<String> {
     let query = match query {
         Some(query) => query,
-        None => "https://api.explorer.aleo.org/v1",
+        None => "https://mainnetv0.sotertech.io",
     };
 
     // Initialize the VM.
@@ -140,7 +140,7 @@ pub fn deploy_for_authorize(
 ) -> Result<String> {
     let query = match query {
         Some(query) => query,
-        None => "https://api.explorer.aleo.org/v1",
+        None => "https://mainnetv0.sotertech.io",
     };
 
     // Specify the query

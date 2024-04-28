@@ -14,7 +14,7 @@ use std::str::FromStr;
 pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) -> Result<String> {
     let query = match query {
         Some(query) => query,
-        None => "https://api.explorer.aleo.org/v1",
+        None => "https://mainnetv0.sotertech.io",
     };
 
     // Specify the query

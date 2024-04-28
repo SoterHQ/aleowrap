@@ -18,31 +18,31 @@ version = "0.8.8"
 
 [dependencies.snarkvm-console]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-circuit]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-synthesizer]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-ledger-block]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-ledger-query]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-ledger-store]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.snarkvm-utilities]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "43abe1b"
+rev = "aef07da"
 
 [dependencies.anyhow]
 version = "1.0.75"

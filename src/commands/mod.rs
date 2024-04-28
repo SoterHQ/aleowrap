@@ -76,7 +76,10 @@ impl Command {
         endpoint: &str,
     ) -> Result<Program<CurrentNetwork>> {
         // Send a request to the query node.
-        let response = ureq::get(&format!("{endpoint}/testnet3/program/{program_id}")).call();
+        #[cfg(feature = "mainnetv0")]
+        let response = ureq::get(&format!("{endpoint}/mainnet/program/{program_id}")).call();
+        #[cfg(feature = "testnetv0")]
+        let response = ureq::get(&format!("{endpoint}/testnet/program/{program_id}")).call();
 
         // Deserialize the program.
         match response {

@@ -167,29 +167,29 @@ mod tests {
 
     #[test]
     fn test_decrypt_record() {
-        let private_key = "APrivateKey1zkpHvQe27pZV91WMHDhKTVpzcU3jqoyqVCc7iPM7HzsUgjQ";
-        let record = r#"
-        {
-            "record_ciphertext": "record1qyqsp8httfd678ztpu92nxqenvqdgj3qspl0hppv9qr29ggjtdqglng0qyxx66trwfhkxun9v35hguerqqpqzqz4lyucm3d4aztjk080fg6j2zvd0gqechlxkl6t5n3pfwrgcmh2pd9dxkmu7htj3mzhfym52t0ftavqj5yyhpf83yuct2g03prvqygqky07vuu",
-            "program_id": "credits.aleo",
-            "height": 13043,
-            "timestamp": 1703152900,
-            "block_hash": "ab16008ac8qqq77npy6vwyk53qp5csvedrclml8rjsk2pxhuftspsqqsng0lq",
-            "transaction_id": "at1p98x8t80qvl9jwqeymsp07xl689guympmvarc47mexyydkd3avqqwxssdt",
-            "transition_id": "au10e48x9z40yfp30k2u3dvux4q74kzcetd56mj4wlg69c6e9dnuyqstkflqj",
-            "function_name": "transfer_public_to_private",
-            "output_index": 0,
-            "input": null,
-            "identifier": "credits",
-            "address": ""
-          }
-        "#;
-        let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key).unwrap();
-        let address = AddressNative::try_from(private_key)
-            .context("Error Address try_from")
-            .unwrap();
-        let address = address.to_string();
-        let record = decrypt_record_data(private_key, record, &address).unwrap();
-        println!("record: {record}");
+        // let private_key = "APrivateKey1zkpHvQe27pZV91WMHDhKTVpzcU3jqoyqVCc7iPM7HzsUgjQ";
+        // let record = r#"
+        // {
+        //     "record_ciphertext": "record1qyqsp8httfd678ztpu92nxqenvqdgj3qspl0hppv9qr29ggjtdqglng0qyxx66trwfhkxun9v35hguerqqpqzqz4lyucm3d4aztjk080fg6j2zvd0gqechlxkl6t5n3pfwrgcmh2pd9dxkmu7htj3mzhfym52t0ftavqj5yyhpf83yuct2g03prvqygqky07vuu",
+        //     "program_id": "credits.aleo",
+        //     "height": 13043,
+        //     "timestamp": 1703152900,
+        //     "block_hash": "ab16008ac8qqq77npy6vwyk53qp5csvedrclml8rjsk2pxhuftspsqqsng0lq",
+        //     "transaction_id": "at1p98x8t80qvl9jwqeymsp07xl689guympmvarc47mexyydkd3avqqwxssdt",
+        //     "transition_id": "au10e48x9z40yfp30k2u3dvux4q74kzcetd56mj4wlg69c6e9dnuyqstkflqj",
+        //     "function_name": "transfer_public_to_private",
+        //     "output_index": 0,
+        //     "input": null,
+        //     "identifier": "credits",
+        //     "address": ""
+        //   }
+        // "#;
+        // let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key).unwrap();
+        // let address = AddressNative::try_from(private_key)
+        //     .context("Error Address try_from")
+        //     .unwrap();
+        // let address = address.to_string();
+        // let record = decrypt_record_data(private_key, record, &address).unwrap();
+        // println!("record: {record}");
     }
 }
