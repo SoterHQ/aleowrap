@@ -18,31 +18,31 @@ version = "0.8.8"
 
 [dependencies.snarkvm-console]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-circuit]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-synthesizer]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-ledger-block]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-ledger-query]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-ledger-store]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.snarkvm-utilities]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "3ebe60c"
+rev = "140ff26"
 
 [dependencies.anyhow]
 version = "1.0.75"
@@ -69,5 +69,6 @@ version = "0.3"
 features = [ "env-filter", "parking_lot", "time", "local-time" ]
 
 [features]
+default = ["testnetv0"]
 mainnetv0 = []
 testnetv0 = []
