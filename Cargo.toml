@@ -1,6 +1,6 @@
 [package]
 name = "aleowrap"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,31 +18,31 @@ version = "0.8.8"
 
 [dependencies.snarkvm-console]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-circuit]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-synthesizer]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-ledger-block]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-ledger-query]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-ledger-store]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.snarkvm-utilities]
 git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "140ff26"
+rev = "57b16db1e"
 
 [dependencies.anyhow]
 version = "1.0.75"
