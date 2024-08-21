@@ -58,6 +58,21 @@ pub fn decrypt_records(view_key: &str, records_orgdata: Vec<String>) -> Result<V
     Ok(decrypted_records)
 }
 
+pub fn decrypt_records_with_private_key(private_key: &str, records_orgdata: Vec<String>) -> Result<Vec<String>> {
+    let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
+        .context("[decrypt_records] Error PrivateKey from_str")?;
+
+    let address = AddressNative::try_from(private_key).context("Error Address try_from")?;
+    let address = address.to_string();
+
+    let decrypted_records = records_orgdata
+        .par_iter()
+        .map(|record| decrypt_record_data_with_private_key(private_key, record, &address))
+        .collect::<Result<Vec<String>, _>>()?;
+
+    Ok(decrypted_records)
+}
+
 fn serial_number_string(
     record: RecordPlaintext,
     private_key: &PrivateKey<CurrentNetwork>,
@@ -121,6 +136,47 @@ pub fn decrypt_record_data(
     Ok("".to_string())
 }
 
+pub fn decrypt_record_data_with_private_key(
+    private_key: PrivateKey<CurrentNetwork>,
+    record: &str,
+    address: &str,
+) -> Result<String> {
+    let record_org_data: RecordOrgData = serde_json::from_str(record)?;
+    if &record_org_data.record_meta.address != "" && record_org_data.record_meta.address != address
+    {
+        return Ok("".to_string());
+    }
+
+    let record = RecordCiphertext::from_str(&record_org_data.record_meta.record_ciphertext)
+        .context("Error RecordCiphertext from_str")?;
+
+    if let Ok(plaintext) = record
+        .decrypt(
+            &ViewKey::<CurrentNetwork>::try_from(private_key)
+                .context("[decrypt_records] Error ViewKey try_from")?,
+        )
+        .context("[decrypt_records] Error record decrypt")
+    {
+        let serial_number = serial_number_string(
+            plaintext.clone(),
+            &private_key,
+            &record_org_data.record_meta.program_id,
+            &record_org_data.record_meta.identifier,
+        )
+        .unwrap_or_default();
+
+        let record_data = RecordData {
+            record: plaintext,
+            serial_number,
+            record_meta: record_org_data.record_meta,
+        };
+
+        return Ok(serde_json::to_string(&record_data)?);
+    }
+
+    Ok("".to_string())
+}
+
 pub fn decrypt_record(private_key: &str, record: &str) -> Result<String> {
     let record = RecordCiphertext::from_str(record).context("Error RecordCiphertext try_from")?;
     let private_key = PrivateKey::<CurrentNetwork>::from_str(private_key)
@@ -150,7 +206,7 @@ mod tests {
                 r#"{"record_ciphertext":"record1qyqsqpe2szk2wwwq56akkwx586hkndl3r8vzdwve32lm7elvphh37rsyqyxx66trwfhkxun9v35hguerqqpqzqrtjzeu6vah9x2me2exkgege824sd8x2379scspmrmtvczs0d93qttl7y92ga0k0rsexu409hu3vlehe3yxjhmey3frh2z5pxm5cmxsv4un97q","program_id":"aleoswap06.aleo","height":425004,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken"}"#.to_string());
         records_orgdata.push(
                     r#"{"record_ciphertext":"record1qyqspasur7r5fmazgeu8j0syd82x2p8e66vempwsdepgcjuz8mqwn9ssqyxx66trwfhkxun9v35hguerqqpqzqzj4qnlagqqhr2jnehymmg7ve20gdqaqenrgrf38zh2zycsrnuwp9erjh6elpyd27vjlar4k70ulzcyhhxazlt7jqs82em2vf57pmmqjzqar9n","program_id":"aleoswap06.aleo","height":425005,"timestamp":1700055612,"block_hash":"ab1anh0ua3fc08slp39r9qrhfp3x8m0q5cv2wsv26euvh44f7w2cqxqmgteav","transaction_id":"at1nap3det0jpk2kvah2p48fnt0z60lqdk7pj86p4f39na5ne9vgc9s569e84","transition_id":"au16qzgrxm8gsuy0ggcnq92sj8mf6sr8m85nnp27x77k4tdsnxv35qsfhj45z","function_name":"transfer_to_private","output_index":0,"input":null,"identifier":"PrivateToken"}"#.to_string());
-        let records = decrypt_records(private_key, records_orgdata).unwrap();
+        let records = decrypt_records_with_private_key(private_key, records_orgdata).unwrap();
         for record in records {
             println!("record: {record}");
         }
