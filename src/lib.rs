@@ -8,39 +8,12 @@ mod tests {
     use crate::commands;
 
     #[test]
-    fn execute() {
-        let private_key = "APrivateKey1zkp5jS79CdFE5LbUzTvXcAd4fZLCTUVVqqgD91AApZVXJcA";
-        let program_id = "credlancer_rating_survey_v2.aleo";
-        let function = "submit_assessor";
-        let inputs = vec![
-            "10000field".to_string(),
-            "1field".to_string(),
-            "1u64".to_string(),
-        ];
-        let record =  Some("{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 39349297u64.private,  _nonce: 1711234411548659851426643372350679804994150752915608367928992063815077333263group.public}");
-        let fee = Some(3000u64);
-        let query = Some("https://mainnetv0.sotertech.io");
-
-        let transaction = commands::execute(
-            private_key,
-            program_id,
-            function,
-            inputs,
-            record,
-            fee,
-            query,
-        );
-
-        println!("execute transaction: {}", transaction.unwrap());
-    }
-
-    #[test]
     fn cost_execute_fee() {
         let program_id = "inscription_v1.aleo";
         let function = "mint_private";
 
         let inputs = vec!["{tick:[108u8, 101u8, 111u8, 115u8], amt: 1u128}".to_string()];
-        let query = Some("https://mainnetv0.sotertech.io");
+        let query = Some("https://mainnet.sotertech.io");
         let base_fee = commands::execution_cost(program_id, function, inputs, query);
         println!("cost_execute_fee transaction: {}", base_fee.unwrap());
     }
@@ -2352,7 +2325,7 @@ finalize set_approval_for_all:
         }
     "#;
 
-        let query = Some("https://mainnetv0.sotertech.io");
+        let query = Some("https://testnetbeta.sotertech.io");
 
         let transaction = commands::transaction_for_authorize(
             "credits.aleo",
@@ -2365,7 +2338,7 @@ finalize set_approval_for_all:
 
     #[test]
     fn deploy_for_authorize() {
-        let query = Some("https://mainnetv0.sotertech.io");
+        let query = Some("https://testnetbeta.sotertech.io");
         let program = r#"
         program hello_world_3db52e57.aleo;
 

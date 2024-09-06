@@ -20,7 +20,7 @@ pub fn transfer(
 ) -> Result<String> {
     let query = match query {
         Some(query) => query,
-        None => "https://mainnetv0.sotertech.io",
+        None => "https://mainnet.sotertech.io",
     };
 
     // Specify the query

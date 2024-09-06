@@ -62,7 +62,7 @@ pub fn execution_cost(
     let function_name = Identifier::from_str(function)?;
     let query = match query {
         Some(query) => query,
-        None => "https://mainnetv0.sotertech.io",
+        None => "https://mainnet.sotertech.io",
     };
     // Load the program and it's imports into the process.
     Command::load_program(&query, &mut vm.process().write(), &program_id)?;

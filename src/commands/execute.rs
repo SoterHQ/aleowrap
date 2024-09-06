@@ -33,7 +33,7 @@ pub fn execute(
 
     let query = match query {
         Some(query) => query,
-        None => "https://mainnetv0.sotertech.io",
+        None => "https://mainnet.sotertech.io",
     };
 
     // Load the program and it's imports into the process.

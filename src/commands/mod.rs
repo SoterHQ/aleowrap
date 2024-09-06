@@ -1,8 +1,8 @@
-#[cfg(feature = "mainnetv0")]
+#[cfg(feature = "mainnet")]
 type CurrentAleo = snarkvm_circuit::AleoV0;
 #[cfg(feature = "testnetv0")]
 type CurrentAleo = snarkvm_circuit::AleoTestnetV0;
-#[cfg(feature = "mainnetv0")]
+#[cfg(feature = "mainnet")]
 type CurrentNetwork = snarkvm_console::network::MainnetV0;
 #[cfg(feature = "testnetv0")]
 type CurrentNetwork = snarkvm_console::network::TestnetV0;
@@ -76,7 +76,7 @@ impl Command {
         endpoint: &str,
     ) -> Result<Program<CurrentNetwork>> {
         // Send a request to the query node.
-        #[cfg(feature = "mainnetv0")]
+        #[cfg(feature = "mainnet")]
         let response = ureq::get(&format!("{endpoint}/mainnet/program/{program_id}")).call();
         #[cfg(feature = "testnetv0")]
         let response = ureq::get(&format!("{endpoint}/testnet/program/{program_id}")).call();
