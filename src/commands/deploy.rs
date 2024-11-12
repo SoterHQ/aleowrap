@@ -3,15 +3,22 @@ use std::{collections::HashMap, str::FromStr};
 use anyhow::{Context, Result};
 use rand::{rngs::StdRng, SeedableRng};
 
-use snarkvm_console::{account::PrivateKey, program::ProgramOwner};
+use snarkvm_circuit::Aleo;
+use snarkvm_console::{
+    account::PrivateKey,
+    program::{Network, ProgramOwner},
+};
 use snarkvm_ledger_block::Transaction;
 use snarkvm_ledger_query::Query;
-use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_ledger_store::{
+    helpers::memory::{BlockMemory, ConsensusMemory},
+    ConsensusStore,
+};
 use snarkvm_synthesizer::{process::deployment_cost, Process, Program, VM};
 
-use super::{Command, CurrentAleo, CurrentNetwork};
+use super::Command;
 
-pub fn deploy(
+pub fn deploy<A: Aleo>(
     private_key: &str,
     program: &str,
     fee_record: Option<&str>,
@@ -25,7 +32,7 @@ pub fn deploy(
     };
 
     // Specify the query
-    let query = Query::from(query);
+    let query: Query<A::Network, BlockMemory<A::Network>> = Query::from(query);
 
     // Retrieve the private key.
     let private_key = PrivateKey::from_str(private_key).context("parse private_key")?;
@@ -34,7 +41,7 @@ pub fn deploy(
 
     let program = Program::from_str(program)?;
 
-    let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    let mut process = Process::<A::Network>::load().context("Error process load")?;
     println!("Checking program imports are valid and add them to the process");
     let _ = resolve_imports(&mut process, &program, imports);
     let rng = &mut StdRng::from_entropy();
@@ -42,7 +49,7 @@ pub fn deploy(
     println!("Creating deployment");
     // Generate the deployment
     let deployment = process
-        .deploy::<CurrentAleo, _>(&program, rng)
+        .deploy::<A, _>(&program, rng)
         .context("Error process deploy")?;
     let deployment_id = deployment
         .to_deployment_id()
@@ -51,7 +58,7 @@ pub fn deploy(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
         .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 
@@ -95,9 +102,9 @@ pub fn deploy(
     Ok(transaction.to_string())
 }
 
-pub fn resolve_imports(
-    process: &mut Process<CurrentNetwork>,
-    program: &Program<CurrentNetwork>,
+pub fn resolve_imports<N: Network>(
+    process: &mut Process<N>,
+    program: &Program<N>,
     imports: Option<HashMap<String, String>>,
 ) -> Result<(), String> {
     if let Some(imports) = imports {
@@ -109,8 +116,8 @@ pub fn resolve_imports(
                 println!("import_string: {import_string}");
                 if &program_id != "credits.aleo" {
                     // crate::log(&format!("Importing program: {}", program_id));
-                    let import = Program::<CurrentNetwork>::from_str(&import_string)
-                        .map_err(|err| err.to_string())?;
+                    let import =
+                        Program::<N>::from_str(&import_string).map_err(|err| err.to_string())?;
                     // If the program has imports, add them
                     resolve_imports(process, &import, Some(imports.clone()))?;
                     // If the process does not already contain the program, add it

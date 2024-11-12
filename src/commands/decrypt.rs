@@ -3,6 +3,7 @@
 //     prelude::{Ciphertext, Field, Network, PrivateKey,ComputeKey, ProgramID, Address}, utilities::{ToBits, Uniform},
 // };
 
+use snarkvm_circuit::Aleo;
 use snarkvm_console::account::{Address, ComputeKey, PrivateKey};
 use snarkvm_console::program::{
     Ciphertext, Field, Identifier, Network, Parser, ProgramID, ToField,
@@ -11,23 +12,21 @@ use snarkvm_utilities::{ToBits, Uniform};
 
 use std::str::FromStr;
 
-use super::CurrentNetwork;
 use anyhow::{Context, Result};
-type CiphertextNative = Ciphertext<CurrentNetwork>;
 
-pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String> {
-    let (remainder, ciphertext) = CiphertextNative::parse(ciphertext).unwrap();
+pub fn decrypt_ciphertext<A: Aleo>(private_key: &str, ciphertext: &str) -> Result<String> {
+    let (remainder, ciphertext) = Ciphertext::<A::Network>::parse(ciphertext).unwrap();
     println!("ciphertext: {}", ciphertext.to_string());
     println!("remainder: {remainder}");
 
     // Construct a network ID.
-    let network_id = CurrentNetwork::ID;
+    let network_id = A::Network::ID;
     // Construct a program ID.
-    let program_id = ProgramID::<CurrentNetwork>::from_str("credits.aleo")?;
+    let program_id = ProgramID::<A::Network>::from_str("credits.aleo")?;
     // Construct a function name.
-    let function_name = Identifier::<CurrentNetwork>::from_str("transfer_private")?;
+    let function_name = Identifier::<A::Network>::from_str("transfer_private")?;
 
-    let function_id = CurrentNetwork::hash_bhp1024(
+    let function_id = A::Network::hash_bhp1024(
         &(
             network_id,
             program_id.name(),
@@ -40,7 +39,7 @@ pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String>
     // let tvp = Group::<CurrentAleo>::from_str(tvp).unwrap();
 
     let private_key =
-        PrivateKey::<CurrentNetwork>::from_str(private_key).context("Error PrivateKey from_str")?;
+        PrivateKey::<A::Network>::from_str(private_key).context("Error PrivateKey from_str")?;
     // Derive the compute key.
     let compute_key = ComputeKey::try_from(private_key)?;
 
@@ -62,10 +61,10 @@ pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String>
     // // Initialize an RNG.
     let rng = &mut rand::thread_rng();
     // Sample a random nonce.
-    let nonce = Field::<CurrentNetwork>::rand(rng);
+    let nonce = Field::<A::Network>::rand(rng);
     // Compute a `r` as `HashToScalar(sk_sig || nonce)`. Note: This is the transition secret key `tsk`.
-    let r = CurrentNetwork::hash_to_scalar_psd4(&[
-        CurrentNetwork::serial_number_domain(),
+    let r = A::Network::hash_to_scalar_psd4(&[
+        A::Network::serial_number_domain(),
         sk_sig.to_field()?,
         nonce,
     ])?;
@@ -77,7 +76,7 @@ pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String>
 
     let index = Field::from_u16(1 as u16);
 
-    let plaintext_view_key = CurrentNetwork::hash_psd4(&[function_id, tvk, index])?;
+    let plaintext_view_key = A::Network::hash_psd4(&[function_id, tvk, index])?;
     let plaintext = ciphertext.decrypt_symmetric(plaintext_view_key)?;
     println!("plaintext: {}", plaintext.to_string());
 
@@ -86,11 +85,13 @@ pub fn decrypt_ciphertext(private_key: &str, ciphertext: &str) -> Result<String>
 
 #[cfg(test)]
 mod tests {
+    use snarkvm_circuit::AleoV0;
+
     use super::decrypt_ciphertext;
 
     #[test]
     fn test_decrypt_ciphertext() {
-        let plaintext = decrypt_ciphertext("APrivateKey1zkp6ZYopKYbJakUtmwgjZ6DAkbvzW592msjZX4Q8SUbk9sN", "ciphertext1qgq9z7ks2dzdwpc7r4ul323u45dyg060na43r4fhfm0ctkmkx4u0xzgpkpnekdskggxnj5fh4yux9sd3ca42nclv7dfr0szx8new6z4hpg6fyhy5");
+        let plaintext = decrypt_ciphertext::<AleoV0>("APrivateKey1zkp6ZYopKYbJakUtmwgjZ6DAkbvzW592msjZX4Q8SUbk9sN", "ciphertext1qgq9z7ks2dzdwpc7r4ul323u45dyg060na43r4fhfm0ctkmkx4u0xzgpkpnekdskggxnj5fh4yux9sd3ca42nclv7dfr0szx8new6z4hpg6fyhy5");
         println!("plaintext: {}", plaintext.unwrap());
     }
 }

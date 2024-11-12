@@ -18,6 +18,8 @@ use rand::rngs::StdRng;
 use rand::SeedableRng;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use snarkvm_circuit::Aleo;
+use snarkvm_console::program::Network;
 use snarkvm_console::program::ProgramID;
 use snarkvm_console::program::ProgramOwner;
 use snarkvm_ledger_block::Transaction;
@@ -26,28 +28,24 @@ use snarkvm_synthesizer::Program;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::commands::CurrentAleo;
 use crate::resolve_imports;
 use crate::Command;
 
-use super::CurrentNetwork;
 use anyhow::{Context, Result};
 use snarkvm_ledger_query::Query;
 use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
 use snarkvm_synthesizer::Authorization as Authorization_VM;
 use snarkvm_synthesizer::VM;
 
-pub type AuthorizationNative = Authorization_VM<CurrentNetwork>;
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct Authorization<N: Network>(Authorization_VM<N>);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Authorization(AuthorizationNative);
-
-impl Authorization {
+impl<N: Network> Authorization<N> {
     /// Create a authorization from a string
     ///
     /// @param {string} authorization String representation of a authorization
     /// @returns {authorization | Error}
-    pub fn from_string(authorization: &str) -> Result<Authorization, String> {
+    pub fn from_string(authorization: &str) -> Result<Authorization<N>, String> {
         Authorization::from_str(authorization)
     }
 
@@ -58,31 +56,36 @@ impl Authorization {
     pub fn to_string(&self) -> String {
         self.0.to_string()
     }
+
+    pub fn from_json(json: &str) -> Result<Authorization<N>> {
+        let authorization: Authorization_VM<N> = serde_json::from_str(json)?;
+        Ok(Authorization(authorization))
+    }
 }
 
-impl From<Authorization> for AuthorizationNative {
-    fn from(authorization: Authorization) -> Self {
+impl<N: Network> From<Authorization<N>> for Authorization_VM<N> {
+    fn from(authorization: Authorization<N>) -> Self {
         authorization.0
     }
 }
 
-impl From<AuthorizationNative> for Authorization {
-    fn from(authorization: AuthorizationNative) -> Self {
+impl<N: Network> From<Authorization_VM<N>> for Authorization<N> {
+    fn from(authorization: Authorization_VM<N>) -> Self {
         Self(authorization)
     }
 }
 
-impl FromStr for Authorization {
+impl<N: Network> FromStr for Authorization<N> {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(
-            AuthorizationNative::from_str(s).map_err(|e| e.to_string())?,
+            Authorization_VM::<N>::from_str(s).map_err(|e| e.to_string())?,
         ))
     }
 }
 
-pub fn transaction_for_authorize(
+pub fn transaction_for_authorize<A: Aleo>(
     program_id: &str,
     execute_authorization_str: &str,
     fee_authorization_str: &str,
@@ -94,12 +97,13 @@ pub fn transaction_for_authorize(
     };
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
     let vm = VM::from(store)?;
 
     let program_id = ProgramID::from_str(program_id)?;
     // Load the program and it's imports into the process.
-    Command::load_program(&query, &mut vm.process().write(), &program_id)?;
+    Command::load_program(&query, &mut vm.process().write(), &program_id)
+        .context("load program error")?;
 
     // Specify the query
     let query = Query::from(query);
@@ -108,20 +112,21 @@ pub fn transaction_for_authorize(
     // Initialize an RNG.
     let rng = &mut rand::thread_rng();
 
-    let execute_authorization: Authorization =
-        serde_json::from_str(&reorder(execute_authorization_str))
+    let execute_authorization =
+        Authorization::<A::Network>::from_json(&reorder(execute_authorization_str))
             .context("execute authorization error")?;
-    let fee_authorization: Option<AuthorizationNative> = if fee_authorization_str.is_empty() {
-        None
-    } else {
-        let fee_authorization: Authorization =
-            serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
-        Some(AuthorizationNative::from(fee_authorization))
-    };
+    let fee_authorization: Option<Authorization_VM<A::Network>> =
+        if fee_authorization_str.is_empty() {
+            None
+        } else {
+            let fee_authorization = Authorization::<A::Network>::from_json(fee_authorization_str)
+                .context("fee authorization error")?;
+            Some(Authorization_VM::from(fee_authorization))
+        };
 
     let transaction = vm
         .execute_authorization(
-            AuthorizationNative::from(execute_authorization),
+            Authorization_VM::<A::Network>::from(execute_authorization),
             fee_authorization,
             Some(query),
             rng,
@@ -131,7 +136,7 @@ pub fn transaction_for_authorize(
     Ok(transaction.to_string())
 }
 
-pub fn deploy_for_authorize(
+pub fn deploy_for_authorize<A: Aleo>(
     program: &str,
     imports: Option<HashMap<String, String>>,
     owner_str: &str,
@@ -148,7 +153,7 @@ pub fn deploy_for_authorize(
 
     let program = Program::from_str(program)?;
 
-    let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    let mut process = Process::<A::Network>::load().context("Error process load")?;
     println!("Checking program imports are valid and add them to the process");
     let _ = resolve_imports(&mut process, &program, imports);
     let rng = &mut StdRng::from_entropy();
@@ -156,28 +161,28 @@ pub fn deploy_for_authorize(
     println!("Creating deployment");
     // Generate the deployment
     let deployment = process
-        .deploy::<CurrentAleo, _>(&program, rng)
+        .deploy::<A, _>(&program, rng)
         .context("Error process deploy")?;
 
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
         .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 
-    let fee_authorization: Authorization =
-        serde_json::from_str(fee_authorization_str).context("fee authorization error")?;
+    let fee_authorization: Authorization<A::Network> =
+        Authorization::<A::Network>::from_json(fee_authorization_str)
+            .context("fee authorization error")?;
 
     let fee = vm.execute_fee_authorization(
-        AuthorizationNative::from(fee_authorization),
+        Authorization_VM::<A::Network>::from(fee_authorization),
         Some(query),
         rng,
     )?;
 
     // Construct the owner.
-    let owner =
-        ProgramOwner::<CurrentNetwork>::from_str(owner_str).context("Error ProgramOwner")?;
+    let owner = ProgramOwner::<A::Network>::from_str(owner_str).context("Error ProgramOwner")?;
 
     // Create a new transaction.
     let transaction =

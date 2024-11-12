@@ -5,6 +5,8 @@ pub use commands::*;
 mod tests {
     use std::collections::HashMap;
 
+    use snarkvm_circuit::{Aleo, AleoTestnetV0, AleoV0};
+
     use crate::commands;
 
     #[test]
@@ -14,7 +16,7 @@ mod tests {
 
         let inputs = vec!["{tick:[108u8, 101u8, 111u8, 115u8], amt: 1u128}".to_string()];
         let query = Some("https://mainnet.sotertech.io");
-        let base_fee = commands::execution_cost(program_id, function, inputs, query);
+        let base_fee = commands::execution_cost::<AleoV0>(program_id, function, inputs, query);
         println!("cost_execute_fee transaction: {}", base_fee.unwrap());
     }
 
@@ -2132,7 +2134,7 @@ finalize set_approval_for_all:
         imports.insert(String::from(import_name_2), String::from(import_code_2));
         imports.insert(String::from(import_name_1), String::from(import_code_1));
 
-        let base_fee = commands::deployment_cost(program_code, Some(imports));
+        let base_fee = commands::deployment_cost::<AleoV0>(program_code, Some(imports));
         println!("cost_deployment_fee: {}", base_fee.unwrap());
     }
 
@@ -2146,7 +2148,7 @@ finalize set_approval_for_all:
         let fee_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 39349297u64.private,  _nonce: 1711234411548659851426643372350679804994150752915608367928992063815077333263group.public}";
         let query = None;
 
-        let transaction = commands::transfer(
+        let transaction = commands::transfer::<AleoV0>(
             private_key,
             recipient,
             amount,
@@ -2166,7 +2168,7 @@ finalize set_approval_for_all:
         let second_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 4593678u64.private,  _nonce: 2519444983733166664452332514213249618009422832813505241649029942240273681354group.public}";
         let fee_record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 2417370u64.private,  _nonce: 6125567204338138114699824935057483504900942792237093903423312221865875650403group.public}";
 
-        let transaction = commands::join(
+        let transaction = commands::join::<AleoV0>(
             private_key,
             first_record,
             second_record,
@@ -2182,7 +2184,7 @@ finalize set_approval_for_all:
         let private_key = "APrivateKey1zkp5jS79CdFE5LbUzTvXcAd4fZLCTUVVqqgD91AApZVXJcA";
         let record = "{  owner: aleo1y3yp6kaq4tl04u06fy4k43kvcl4azlddy0fsamdj6smsa6rnxg9sk09ltz.private,  microcredits: 4593678u64.private,  _nonce: 2519444983733166664452332514213249618009422832813505241649029942240273681354group.public}";
         let amount = 1000000u64;
-        let transaction = commands::split(private_key, record, amount, None);
+        let transaction = commands::split::<AleoV0>(private_key, record, amount, None);
         println!("join transaction: {}", transaction.unwrap());
     }
 
@@ -2327,12 +2329,16 @@ finalize set_approval_for_all:
 
         let query = Some("https://testnetbeta.sotertech.io");
 
-        let transaction = commands::transaction_for_authorize(
+        let transaction = commands::transaction_for_authorize::<AleoTestnetV0>(
             "credits.aleo",
             execute_authorization,
             fee_authorization,
             query,
         );
+        if let Err(e) = transaction {
+            panic!("err: {:#?}", e)
+        }
+        assert!(transaction.is_ok());
         println!("transfer transaction: {}", transaction.unwrap());
     }
 
@@ -2426,8 +2432,13 @@ function main:
             }
         "#;
 
-        let transaction =
-            commands::deploy_for_authorize(program, None, owner_str, fee_authorization_str, query);
+        let transaction = commands::deploy_for_authorize::<AleoTestnetV0>(
+            program,
+            None,
+            owner_str,
+            fee_authorization_str,
+            query,
+        );
         println!("transfer transaction: {}", transaction.unwrap());
     }
 }

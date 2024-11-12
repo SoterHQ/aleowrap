@@ -1,8 +1,9 @@
-use super::{Command, CurrentNetwork};
+use super::Command;
 
+use snarkvm_circuit::Aleo;
 use snarkvm_console::{
     account::PrivateKey,
-    program::Value,
+    program::{Network, Value},
 };
 use snarkvm_ledger_query::Query;
 use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
@@ -11,7 +12,12 @@ use snarkvm_synthesizer::VM;
 use anyhow::{Context, Result};
 use std::str::FromStr;
 
-pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) -> Result<String> {
+pub fn split<A: Aleo>(
+    private_key: &str,
+    record: &str,
+    amount: u64,
+    query: Option<&str>,
+) -> Result<String> {
     let query = match query {
         Some(query) => query,
         None => "https://mainnet.sotertech.io",
@@ -38,7 +44,7 @@ pub fn split(private_key: &str, record: &str, amount: u64, query: Option<&str>) 
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
         .context("ConsensusStore open error")?;
     let vm = VM::from(store)?;
 

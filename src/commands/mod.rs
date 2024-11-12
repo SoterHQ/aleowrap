@@ -1,11 +1,3 @@
-#[cfg(feature = "mainnet")]
-type CurrentAleo = snarkvm_circuit::AleoV0;
-#[cfg(feature = "testnetv0")]
-type CurrentAleo = snarkvm_circuit::AleoTestnetV0;
-#[cfg(feature = "mainnet")]
-type CurrentNetwork = snarkvm_console::network::MainnetV0;
-#[cfg(feature = "testnetv0")]
-type CurrentNetwork = snarkvm_console::network::TestnetV0;
 
 mod cost;
 pub use cost::*;
@@ -43,43 +35,45 @@ use anyhow::{bail, ensure, Result};
 
 use snarkvm_console::{
     account::{PrivateKey, ViewKey},
-    program::{Ciphertext, Plaintext, ProgramID, Record},
+    program::{Ciphertext, Network, Plaintext, ProgramID, Record},
 };
 use snarkvm_ledger_block::transaction::Transaction;
 use snarkvm_synthesizer::{Process, Program};
 use snarkvm_utilities::ToBytes;
 
+pub use snarkvm_circuit::{Aleo, AleoCanaryV0, AleoTestnetV0, AleoV0};
+pub use snarkvm_console::network::{CanaryV0, MainnetV0, TestnetV0};
+
 pub struct Command {}
 
 impl Command {
-    fn parse_record(
-        private_key: &PrivateKey<CurrentNetwork>,
+    fn parse_record<N: Network>(
+        private_key: &PrivateKey<N>,
         record: &str,
-    ) -> Result<Record<CurrentNetwork, Plaintext<CurrentNetwork>>> {
+    ) -> Result<Record<N, Plaintext<N>>> {
         match record.starts_with("record1") {
             true => {
                 // Parse the ciphertext.
-                let ciphertext =
-                    Record::<CurrentNetwork, Ciphertext<CurrentNetwork>>::from_str(record)?;
+                let ciphertext = Record::<N, Ciphertext<N>>::from_str(record)?;
                 // Derive the view key.
-                let view_key: ViewKey<CurrentNetwork> = ViewKey::try_from(private_key)?;
+                let view_key: ViewKey<N> = ViewKey::try_from(private_key)?;
                 // Decrypt the ciphertext.
                 ciphertext.decrypt(&view_key)
             }
-            false => Record::<CurrentNetwork, Plaintext<CurrentNetwork>>::from_str(record),
+            false => Record::<N, Plaintext<N>>::from_str(record),
         }
     }
 
     /// Fetch the program from the given endpoint.
-    fn fetch_program(
-        program_id: &ProgramID<CurrentNetwork>,
-        endpoint: &str,
-    ) -> Result<Program<CurrentNetwork>> {
+    fn fetch_program<N: Network>(program_id: &ProgramID<N>, endpoint: &str) -> Result<Program<N>> {
         // Send a request to the query node.
-        #[cfg(feature = "mainnet")]
-        let response = ureq::get(&format!("{endpoint}/mainnet/program/{program_id}")).call();
-        #[cfg(feature = "testnetv0")]
-        let response = ureq::get(&format!("{endpoint}/testnet/program/{program_id}")).call();
+        let response = match N::ID {
+            // Fetch the response.
+            MainnetV0::ID => ureq::get(&format!("{endpoint}/mainnet/program/{program_id}")).call(),
+            TestnetV0::ID => ureq::get(&format!("{endpoint}/testnet/program/{program_id}")).call(),
+            CanaryV0::ID => ureq::get(&format!("{endpoint}/canary/program/{program_id}")).call(),
+            _ => bail!("Invalid network"),
+        };
 
         // Deserialize the program.
         match response {
@@ -96,10 +90,10 @@ impl Command {
     }
 
     /// A helper function to recursively load the program and all of its imports into the process.
-    fn load_program(
+    fn load_program<N: Network>(
         endpoint: &str,
-        process: &mut Process<CurrentNetwork>,
-        program_id: &ProgramID<CurrentNetwork>,
+        process: &mut Process<N>,
+        program_id: &ProgramID<N>,
     ) -> Result<()> {
         // Fetch the program.
         let program = Command::fetch_program(program_id, endpoint)?;
@@ -127,11 +121,11 @@ impl Command {
     }
 
     /// Determine if the transaction should be broadcast or displayed to user.
-    pub fn handle_transaction(
+    pub fn handle_transaction<N: Network>(
         broadcast: Option<String>,
         dry_run: bool,
         store: Option<String>,
-        transaction: Transaction<CurrentNetwork>,
+        transaction: Transaction<N>,
         operation: String,
     ) -> Result<String> {
         // Get the transaction id.

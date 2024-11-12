@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use rand::{rngs::StdRng, SeedableRng};
 use serde_json;
 
+use snarkvm_circuit::Aleo;
 use snarkvm_console::{account::PrivateKey, program::Identifier, program::ProgramID};
 use snarkvm_ledger_query::Query;
 use snarkvm_ledger_store::{
@@ -16,11 +17,14 @@ use snarkvm_synthesizer::{
     Process, Program, VM,
 };
 
-use super::{deploy::resolve_imports, Command, CurrentAleo, CurrentNetwork};
+use super::{deploy::resolve_imports, Command};
 
-pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) -> Result<String> {
+pub fn deployment_cost<A: Aleo>(
+    program: &str,
+    imports: Option<HashMap<String, String>>,
+) -> Result<String> {
     let program = Program::from_str(program)?;
-    let mut process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    let mut process = Process::<A::Network>::load().context("Error process load")?;
     println!("resolve_imports");
     let _ = resolve_imports(&mut process, &program, imports);
     let rng = &mut StdRng::from_entropy();
@@ -28,7 +32,7 @@ pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) 
     println!("Creating deployment");
     // Generate the deployment
     let deployment = process
-        .deploy::<CurrentAleo, _>(&program, rng)
+        .deploy::<A, _>(&program, rng)
         .context("Error process deploy")?;
 
     let (minimum_deployment_cost, (storage_cost, synthesis_cost, namespace_cost)) =
@@ -44,7 +48,7 @@ pub fn deployment_cost(program: &str, imports: Option<HashMap<String, String>>) 
     Ok(json_object.to_string())
 }
 
-pub fn execution_cost(
+pub fn execution_cost<A: Aleo>(
     program_id: &str,
     function: &str,
     inputs: Vec<String>,
@@ -54,7 +58,7 @@ pub fn execution_cost(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
     let vm = VM::from(store)?;
 
     let private_key = PrivateKey::new(rng).unwrap();
@@ -75,19 +79,19 @@ pub fn execution_cost(
     let (_, mut trace) = vm
         .process()
         .write()
-        .execute::<CurrentAleo, _>(authorization, rng)
+        .execute::<A, _>(authorization, rng)
         .context("Error process execute")?;
 
-    let query = Query::<CurrentNetwork, BlockMemory<_>>::from(query);
+    let query = Query::<A::Network, BlockMemory<_>>::from(query);
 
     trace.prepare(query)?;
 
     let locator = program_id.to_string().add("/").add(function);
     let execution = trace
-        .prove_execution::<CurrentAleo, _>(&locator, &mut StdRng::from_entropy())
+        .prove_execution::<A, _>(&locator, &mut StdRng::from_entropy())
         .context("execution_cost prove_execution load")?;
 
-    let process = Process::<CurrentNetwork>::load().context("Error process load")?;
+    let process = Process::<A::Network>::load().context("Error process load")?;
     let (minimum_execution_cost, (storage_cost, finalize_cost)) =
         vm_execution_cost(&process, &execution)?;
 

@@ -1,9 +1,7 @@
-use super::{Command, CurrentNetwork};
+use super::Command;
 
-use snarkvm_console::{
-    account::PrivateKey,
-    program::Value,
-};
+use snarkvm_circuit::Aleo;
+use snarkvm_console::{account::PrivateKey, program::Value};
 use snarkvm_ledger_query::Query;
 use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
 use snarkvm_synthesizer::VM;
@@ -11,7 +9,7 @@ use snarkvm_synthesizer::VM;
 use anyhow::{Context, Result};
 use std::str::FromStr;
 
-pub fn join(
+pub fn join<A: Aleo>(
     private_key: &str,
     first_record: &str,
     second_record: &str,
@@ -58,7 +56,7 @@ pub fn join(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
         .context("ConsensusStore open error")?;
     let vm = VM::from(store)?;
 

@@ -1,5 +1,6 @@
-use super::{Command, CurrentNetwork};
+use super::Command;
 
+use snarkvm_circuit::Aleo;
 use snarkvm_console::{
     account::PrivateKey,
     program::{Identifier, ProgramID, Value},
@@ -11,7 +12,7 @@ use snarkvm_synthesizer::VM;
 use anyhow::{Context, Result};
 use std::str::FromStr;
 
-pub fn execute(
+pub fn execute<A: Aleo>(
     private_key: &str,
     program_id: &str,
     function: &str,
@@ -24,7 +25,7 @@ pub fn execute(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<CurrentNetwork, ConsensusMemory<CurrentNetwork>>::open(None)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
     let vm = VM::from(store)?;
 
     let private_key = PrivateKey::from_str(private_key)?;
@@ -47,7 +48,7 @@ pub fn execute(
         None => None,
     };
 
-    let mut input_list: Vec<Value<CurrentNetwork>> = Vec::new();
+    let mut input_list: Vec<Value<A::Network>> = Vec::new();
 
     for input in inputs.iter() {
         let ss = Value::from_str(input).with_context(|| return format!("input {input} err"))?;

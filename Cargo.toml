@@ -55,7 +55,7 @@ default-features = false
 version = "2.7"
 
 [dependencies.time]
-version = "0.3.7"
+version = "0.3.36"
 features = ["macros"]
 
 [dependencies.tracing]
