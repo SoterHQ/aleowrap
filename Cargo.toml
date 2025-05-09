@@ -12,37 +12,31 @@ name = "aleowrap"
 rayon = "1.8.0"
 serde = "1.0"
 serde_json = "1.0"
+aleo-std = "1.0.1"
 
 [dependencies.ahash]
 version = "0.8.8"
 
 [dependencies.snarkvm-console]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-circuit]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-synthesizer]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-ledger-block]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-ledger-query]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-ledger-store]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.snarkvm-utilities]
-git = "https://github.com/AleoHQ/snarkVM.git"
-rev = "02994a1"
+git = "https://github.com/ProvableHQ/snarkVM.git"
 
 [dependencies.anyhow]
 version = "1.0.75"
@@ -65,7 +59,7 @@ version = "0.1"
 version = "0.3"
 
 [dependencies.tracing-subscriber]
-version = "0.3"
+version = "0.3.19"
 features = [ "env-filter", "parking_lot", "time", "local-time" ]
 
 [features]

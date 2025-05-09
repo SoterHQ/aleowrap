@@ -97,7 +97,7 @@ pub fn transaction_for_authorize<A: Aleo>(
     };
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)?;
     let vm = VM::from(store)?;
 
     let program_id = ProgramID::from_str(program_id)?;
@@ -167,7 +167,7 @@ pub fn deploy_for_authorize<A: Aleo>(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)
         .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 

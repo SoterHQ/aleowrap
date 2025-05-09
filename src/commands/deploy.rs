@@ -58,7 +58,7 @@ pub fn deploy<A: Aleo>(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)
         .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 

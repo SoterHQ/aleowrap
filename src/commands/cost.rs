@@ -13,7 +13,7 @@ use snarkvm_ledger_store::{
 };
 // deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost,
 use snarkvm_synthesizer::{
-    process::{deployment_cost as vm_deployment_cost, execution_cost as vm_execution_cost},
+    process::{deployment_cost as vm_deployment_cost, execution_cost_v2 as vm_execution_cost},
     Process, Program, VM,
 };
 
@@ -48,58 +48,59 @@ pub fn deployment_cost<A: Aleo>(
     Ok(json_object.to_string())
 }
 
-pub fn execution_cost<A: Aleo>(
-    program_id: &str,
-    function: &str,
-    inputs: Vec<String>,
-    query: Option<&str>,
-) -> Result<String> {
-    // // Initialize an RNG.
-    let rng = &mut rand::thread_rng();
+// pub fn execution_cost<A: Aleo>(
+//     program_id: &str,
+//     function: &str,
+//     inputs: Vec<String>,
+//     query: Option<&str>,
+// ) -> Result<String> {
+//     // // Initialize an RNG.
+//     let rng = &mut rand::thread_rng();
 
-    // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
-    let vm = VM::from(store)?;
+//     // Initialize the VM.
+//     let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(None)?;
+//     let vm = VM::from(store)?;
 
-    let private_key = PrivateKey::new(rng).unwrap();
-    let program_id = ProgramID::from_str(program_id)?;
-    let function_name = Identifier::from_str(function)?;
-    let query = match query {
-        Some(query) => query,
-        None => "https://mainnet.sotertech.io",
-    };
-    // Load the program and it's imports into the process.
-    Command::load_program(&query, &mut vm.process().write(), &program_id)?;
+//     let private_key = PrivateKey::new(rng).unwrap();
+//     let program_id = ProgramID::from_str(program_id)?;
+//     let function_name = Identifier::from_str(function)?;
+//     let query = match query {
+//         Some(query) => query,
+//         None => "https://mainnet.sotertech.io",
+//     };
+//     // Load the program and it's imports into the process.
+//     Command::load_program(&query, &mut vm.process().write(), &program_id)?;
 
-    // Compute the authorization.
-    let authorization = vm
-        .authorize(&private_key, program_id, function_name, inputs, rng)
-        .context("Error execution_cost vm authorize")?;
+//     // Compute the authorization.
+//     let authorization = vm
+//         .authorize(&private_key, program_id, function_name, inputs, rng)
+//         .context("Error execution_cost vm authorize")?;
 
-    let (_, mut trace) = vm
-        .process()
-        .write()
-        .execute::<A, _>(authorization, rng)
-        .context("Error process execute")?;
+//     let (_, mut trace) = vm
+//         .process()
+//         .write()
+//         .execute::<A, _>(authorization, rng)
+//         .context("Error process execute")?;
 
-    let query = Query::<A::Network, BlockMemory<_>>::from(query);
+//     let query = Query::<A::Network, BlockMemory<_>>::from(query);
 
-    trace.prepare(query)?;
+//     trace.prepare(query)?;
 
-    let locator = program_id.to_string().add("/").add(function);
-    let execution = trace
-        .prove_execution::<A, _>(&locator, &mut StdRng::from_entropy())
-        .context("execution_cost prove_execution load")?;
+//     let locator = program_id.to_string().add("/").add(function);
+//     let execution = trace
+//         .prove_execution::<A, _>(&locator, &mut StdRng::from_entropy())
+//         .context("execution_cost prove_execution load")?;
+    
 
-    let process = Process::<A::Network>::load().context("Error process load")?;
-    let (minimum_execution_cost, (storage_cost, finalize_cost)) =
-        vm_execution_cost(&process, &execution)?;
+//     let process = Process::<A::Network>::load().context("Error process load")?;
+//     let (minimum_execution_cost, (storage_cost, finalize_cost)) =
+//         vm_execution_cost(&process, &execution)?;
 
-    let json_object = serde_json::json!({
-        "minimum_execution_cost":minimum_execution_cost,
-        "storage_cost":storage_cost,
-        "finalize_cost":finalize_cost,
-    });
+//     let json_object = serde_json::json!({
+//         "minimum_execution_cost":minimum_execution_cost,
+//         "storage_cost":storage_cost,
+//         "finalize_cost":finalize_cost,
+//     });
 
-    Ok(json_object.to_string())
-}
+//     Ok(json_object.to_string())
+// }
