@@ -89,7 +89,7 @@ pub fn deploy<A: Aleo>(
         )?,
     };
 
-    let fee = vm.execute_fee_authorization(fee_authorization, Some(query), rng)?;
+    let fee = vm.execute_fee_authorization(fee_authorization, Some(&query), rng)?;
 
     // Construct the owner.
     let owner =

@@ -16,13 +16,14 @@
 
 use rand::rngs::StdRng;
 use rand::SeedableRng;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
 use snarkvm_circuit::Aleo;
 use snarkvm_console::program::Network;
 use snarkvm_console::program::ProgramID;
 use snarkvm_console::program::ProgramOwner;
 use snarkvm_ledger_block::Transaction;
+use snarkvm_ledger_store::helpers::memory::BlockMemory;
 use snarkvm_synthesizer::Process;
 use snarkvm_synthesizer::Program;
 use std::collections::HashMap;
@@ -97,16 +98,19 @@ pub fn transaction_for_authorize<A: Aleo>(
     };
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(
+        aleo_std::StorageMode::Production,
+    )?;
     let vm = VM::from(store)?;
 
     let program_id = ProgramID::from_str(program_id)?;
+
+    // Specify the query
+    let query: Query<_, BlockMemory<A::Network>> = Query::from(query);
+
     // Load the program and it's imports into the process.
     Command::load_program(&query, &mut vm.process().write(), &program_id)
         .context("load program error")?;
-
-    // Specify the query
-    let query = Query::from(query);
 
     // Generate the transfer_private transaction.
     // Initialize an RNG.
@@ -128,7 +132,7 @@ pub fn transaction_for_authorize<A: Aleo>(
         .execute_authorization(
             Authorization_VM::<A::Network>::from(execute_authorization),
             fee_authorization,
-            Some(query),
+            Some(&query),
             rng,
         )
         .context("execute error")?;
@@ -149,7 +153,7 @@ pub fn deploy_for_authorize<A: Aleo>(
     };
 
     // Specify the query
-    let query = Query::from(query);
+    let query: Query<_, BlockMemory<A::Network>> = Query::from(query);
 
     let program = Program::from_str(program)?;
 
@@ -167,8 +171,10 @@ pub fn deploy_for_authorize<A: Aleo>(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)
-        .context("Error ConsensusStore")?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(
+        aleo_std::StorageMode::Production,
+    )
+    .context("Error ConsensusStore")?;
     let vm = VM::from(store).context("Error VM")?;
 
     let fee_authorization: Authorization<A::Network> =
@@ -177,7 +183,7 @@ pub fn deploy_for_authorize<A: Aleo>(
 
     let fee = vm.execute_fee_authorization(
         Authorization_VM::<A::Network>::from(fee_authorization),
-        Some(query),
+        Some(&query),
         rng,
     )?;
 

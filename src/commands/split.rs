@@ -3,10 +3,10 @@ use super::Command;
 use snarkvm_circuit::Aleo;
 use snarkvm_console::{
     account::PrivateKey,
-    program::{Network, Value},
+    program::Value,
 };
 use snarkvm_ledger_query::Query;
-use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_ledger_store::{helpers::memory::{BlockMemory, ConsensusMemory}, ConsensusStore};
 use snarkvm_synthesizer::VM;
 
 use anyhow::{Context, Result};
@@ -24,7 +24,7 @@ pub fn split<A: Aleo>(
     };
 
     // Specify the query
-    let query = Query::from(query);
+    let query: Query<_, BlockMemory<A::Network>> = Query::from(query);
 
     // Retrieve the private key.
     let private_key = PrivateKey::from_str(private_key).context("private_key is error")?;
@@ -56,7 +56,7 @@ pub fn split<A: Aleo>(
             inputs.iter(),
             None,
             0u64,
-            Some(query),
+            Some(&query),
             rng,
         )
         .context("execute error")?;

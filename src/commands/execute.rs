@@ -6,7 +6,10 @@ use snarkvm_console::{
     program::{Identifier, ProgramID, Value},
 };
 use snarkvm_ledger_query::Query;
-use snarkvm_ledger_store::{helpers::memory::ConsensusMemory, ConsensusStore};
+use snarkvm_ledger_store::{
+    helpers::memory::{BlockMemory, ConsensusMemory},
+    ConsensusStore,
+};
 use snarkvm_synthesizer::VM;
 
 use anyhow::{Context, Result};
@@ -25,7 +28,9 @@ pub fn execute<A: Aleo>(
     let rng = &mut rand::thread_rng();
 
     // Initialize the VM.
-    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(aleo_std::StorageMode::Production)?;
+    let store = ConsensusStore::<A::Network, ConsensusMemory<A::Network>>::open(
+        aleo_std::StorageMode::Production,
+    )?;
     let vm = VM::from(store)?;
 
     let private_key = PrivateKey::from_str(private_key)?;
@@ -37,10 +42,10 @@ pub fn execute<A: Aleo>(
         None => "https://mainnet.sotertech.io",
     };
 
+    let query: Query<_, BlockMemory<A::Network>> = Query::from(query);
+
     // Load the program and it's imports into the process.
     Command::load_program(&query, &mut vm.process().write(), &program_id)?;
-
-    let query = Query::from(query);
 
     // Prepare the fee.
     let fee_record = match fee_record {
@@ -65,7 +70,7 @@ pub fn execute<A: Aleo>(
             input_list.iter(),
             fee_record,
             priority_fee_in_microcredits,
-            Some(query),
+            Some(&query),
             rng,
         )
         .context("execute error")?;

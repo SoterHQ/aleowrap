@@ -84,6 +84,12 @@ fn serial_number_string<N: Network>(
     program_id: &str,
     record_name: &str,
 ) -> Result<String, String> {
+    let view_key = ViewKey::<N>::try_from(private_key)
+        .map_err(|_| "View key derivation failed".to_string())?;
+
+    // Compute the record view key.
+    let record_view_key = (*record.nonce() * *view_key).to_x_coordinate();
+
     let commitment = Field::from(
         record
             .to_commitment(
@@ -91,6 +97,7 @@ fn serial_number_string<N: Network>(
                     .map_err(|_| format!("{program_id} is an invalid program name"))?,
                 &Identifier::from_str(record_name)
                     .map_err(|_| format!("{record_name} is an invalid identifier"))?,
+                &record_view_key,
             )
             .map_err(|e| e.to_string())?,
     );

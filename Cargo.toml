@@ -19,24 +19,32 @@ version = "0.8.8"
 
 [dependencies.snarkvm-console]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.snarkvm-circuit]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.snarkvm-synthesizer]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.snarkvm-ledger-block]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.snarkvm-ledger-query]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
+features = ["async"]
 
 [dependencies.snarkvm-ledger-store]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.snarkvm-utilities]
 git = "https://github.com/ProvableHQ/snarkVM.git"
+branch = "testnet"
 
 [dependencies.anyhow]
 version = "1.0.75"
@@ -46,7 +54,7 @@ version = "0.8"
 default-features = false
 
 [dependencies.ureq]
-version = "2.7"
+version = "3"
 
 [dependencies.time]
 version = "0.3.36"
